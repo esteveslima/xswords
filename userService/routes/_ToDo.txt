@@ -1,0 +1,6 @@
+get Router from express
+require each function from controllers
+
+build the router for each controller function with the correspontent methods with de correct URL
+
+middlewares functions can also be passed in the second argument

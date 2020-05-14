@@ -1,0 +1,24 @@
+/*.modalLogin {
+    width: 50% ; 
+}
+*/
+.modalLoginBody > * {    
+    margin: 10px ;
+}
+/*
+.modalLoginButtonLogin {
+    background-color: '#333';
+    border-color: '#333';
+}
+
+.modalLoginButtonRegister {
+    background-color: '#fff';
+    border-color: '#333';
+    color: '#333';
+}
+
+.modalLoginFooter > * {    
+    display: flex ;
+    justify-content: space-between;
+}
+*/

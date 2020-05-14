@@ -1,0 +1,6 @@
+require mongoose and create and export the model to each working object
+
+create encrypt method data using bcryptjs in mongoose pre save event
+also create a method to compare encrypted data using decrypt
+
+create method to sign jwt and create token

@@ -1,0 +1,2 @@
+require the model and create each function to respond to the correspondent request
+no need to export

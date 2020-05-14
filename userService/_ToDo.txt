@@ -1,0 +1,24 @@
+npm init:			create package.json
+
+express	dotenv:		node_modules and config file
+					create config folder and file
+					set scripts accordingly in package.json(and with the config variables if needed)
+
+nodemon:			autoupdate server
+
+morgan:				option for log middleware
+
+colors:				optional for console styling
+
+mongoose:			Mongo ODM to manipulate data, create config file to connect
+
+create database cluster and user, configuring the ip address to access
+
+
+
+get and set required libraries and packages(express, dotenvConfig, bodyParser, dbConnection, logger, router, errorHandler) requiring or pointing to the correct directories
+
+start server in port with .listen
+
+handle unhandled promises rejections to kill app if somethings goes wrong
+

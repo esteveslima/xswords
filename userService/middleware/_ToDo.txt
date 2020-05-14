@@ -1,0 +1,9 @@
+create and export function to run on each request
+
+loggers             -> custom or from library log function
+import cookie-parser(in this project it is used in a function inside the controller)
+(above need to be used before routers)
+
+(below need to be used after routes to catch)
+erro handler        -> create it inside another folder utils, wrap response errors
+asynchandler        -> wrap async functions to dismiss the use of try/catch blocks

@@ -1,0 +1,5 @@
+create variables as PORT and NODE_ENV to config.env
+
+create variables to connect to database and a file with the function to connect
+
+create variables to JWT secret, expires and cookie expires
