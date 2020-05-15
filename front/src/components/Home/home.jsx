@@ -74,7 +74,7 @@ export default class Home extends Component {
                 {
                     (!this.state.user) ? loginView :
                         (homeView)
-                }
+                }                
             </div>
         )
     }

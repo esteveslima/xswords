@@ -1,8 +1,17 @@
 const express = require('express')
 const dotenv = require('dotenv')
 const colors = require('colors')
+const cors = require('cors')
 
 const app = express()
+
+var corsOptions = {
+        origin: '*',
+        methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Access-Token'],
+        exposedHeaders: ['Access-Token']
+    };
+app.use(cors(corsOptions));
 
 //Body parser
 app.use(express.json())

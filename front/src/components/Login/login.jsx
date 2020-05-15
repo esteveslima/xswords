@@ -1,7 +1,10 @@
 import React, { Component } from 'react'
 import { Modal, Button, Input } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { USER_SERVER } from '../../config/urls'
 import './login.css'
+import Register from '../Register/register'
+
 
 export default class Login extends Component {
 
@@ -14,50 +17,49 @@ export default class Login extends Component {
 
             visible: true,
             loading: false,
+
+            registerVisible: false,
         }
     }
 
-
-    register = () => {
-
+    registrationSelfClose = () => {
+        this.setState({registerVisible: false})
     }
 
-    login = async () => {
-        this.setState({ loading: true })
-        this.props.onSuccess('userToken')
-        setTimeout(() => {
-            this.setState({ visible: false })
-        }, 1000);
-
-        /*const h = {
-            //'access-token' : JSON.parse(sessionStorage.getItem('token')),
-            'Content-Type': 'application/json'
-        }
-        const response = await fetch('http://192.168.0.107:5000' + '/api/user/', {
+    login = async () => {        
+        this.setState({ loading: true })     
+        
+        const response = await fetch(`${USER_SERVER}/api/auth/login/`, {
             method: "POST",
-            body: JSON.stringify({
-                nickName: "testefront",
+            headers: {
+              //'access-token' : JSON.parse(sessionStorage.getItem('token')),
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({                
                 login: this.state.login,
                 password: this.state.password
             }),
-            headers: h,
-        })
-        console.log(response)
+            
+        })                
         var json = await response.json()
+        
+        if (json.status) {      
+            this.props.onSuccess(json.token)
+            this.setState({ visible: false })            
+        } else {            
+            console.log('error:' + json.error)
+        }
 
-        if (json.status === 'true') {
-            this.setState({ visible: false })
-            console.log("sucesso")
-        } else {
-            this.setState({ loading: false })
-            console.log(json.error)
-        }*/
-
+      this.setState({loading: false})
     }
 
 
 
     render() {
+
+        const registerView = (
+             <Register visible={this.state.registerVisible} selfClose={this.registrationSelfClose.bind(this)}/>
+        )
 
         const loginModal = (
             <Modal className="modalLogin"
@@ -70,17 +72,17 @@ export default class Login extends Component {
                     <div className="modalLoginFooter" style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Button className="modalLoginButtonRegister"
                             style={{ backgroundColor: '#fff', borderColor: '#333', color: '#333' }}
-                            onClick={() => this.register()}
+                            onClick={() => this.setState({ registerVisible: true })}
                         >
                             Cadastro
-                </Button>
+                        </Button>
                         <Button className="modalLoginButtonLogin" type="primary"
                             style={{ backgroundColor: '#333', borderColor: '#333' }}
                             loading={this.state.loading}
                             onClick={() => this.login()}
                         >
                             Entrar
-                </Button>
+                        </Button>
                     </div>
                 ]}
             >
@@ -98,6 +100,7 @@ export default class Login extends Component {
         return (
             <div id="modalLogin">
                 {loginModal}
+                {registerView}
             </div>
         )
     }
