@@ -58,7 +58,7 @@ export default class Register extends Component {
         const registerModal = (
             <Modal className="modalRegister"
                 title="Register"
-                width={500}
+                width={310}                
                 centered={true}
                 visible={this.state.visible}
                 closable={true}

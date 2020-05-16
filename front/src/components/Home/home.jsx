@@ -1,7 +1,9 @@
 import Login from '../Login/login'
+import Store from '../Store/store'
+import Queue from '../Queue/queue'
+import Game from '../Game/game'
 
 import React, { Component } from 'react'
-import { Modal, Button, Input, Drawer } from 'antd';
 import { ShopTwoTone } from '@ant-design/icons';
 import './home.css'
 
@@ -11,57 +13,68 @@ export default class Home extends Component {
         super(props)
 
         this.state = {
-            user: undefined,
-
+            user: undefined,                        
+            matchData: undefined,
+            gameVisible: false,
             storeVisible: false,
+            queueVisible: false,
+                        
         }
 
     }
 
-    setUser(userToken) {
-        this.setState({ user: userToken })
-        console.log(userToken)
-    }
+
+
 
 
     render() {
 
         const loginView = (
-            <Login onSuccess={this.setUser.bind(this)} />
+            <Login onSuccess={(userToken) => this.setState({ user: userToken })} />
         )
 
-        const buttonPlay = (
-            <div className="buttonPlay">
-                <span className="buttonPlayWord">Jogar</span>
-            </div>
+        const storeView = (
+            <Store visible={this.state.storeVisible} selfClose={()=> this.setState({storeVisible: false})}/>
+        )
+
+        const queueView = (
+            <Queue visible={this.state.queueVisible} selfClose={()=> this.setState({queueVisible: false})} 
+                onFinish={(matchData) => {                                         
+                    this.setState({
+                        queueVisible: false, 
+                        gameVisible: true, 
+                        matchData: matchData
+                    })  
+                    
+                }}
+            />
+        )
+
+        const gameView = (
+            <Game visible={this.state.gameVisible} selfClose={()=> this.setState({gameVisible: false})} matchData={this.state.matchData}/>
         )
 
         const buttonStore = (
             <div className="buttonStore" onClick={() => this.setState({ storeVisible: true })}>
                 <ShopTwoTone twoToneColor="#f00" style={{ fontSize: '75px' }} />
             </div>
-        )
+        )        
 
-        const drawerStore = (
-            <Drawer
-                title="Loja"
-                placement="left"
-                closable={false}
-                width="300"
-                onClose={() => this.setState({ storeVisible: false })}
-                visible={this.state.storeVisible}
-            >
-                <p>Itens Loja...</p>
-                <p>Itens Loja...</p>
-                <p>Itens Loja...</p>
-            </Drawer>
-        )
+        const buttonPlay = (
+            <div className="buttonPlay" onClick={() => this.setState({ queueVisible: true })}>
+                <span className="buttonPlayWord">Jogar</span>
+            </div>
+        )    
+        
+        
 
         const homeView = (
             <div className="homeView">
                 {buttonPlay}
                 {buttonStore}
-                {drawerStore}
+                {storeView}
+                {queueView}
+                {gameView}
             </div>
         )
 
@@ -72,8 +85,7 @@ export default class Home extends Component {
                     src="https://si.wsj.net/public/resources/images/OG-CO816_201904_G_20190422123727.gif"
                 />
                 {
-                    (!this.state.user) ? loginView :
-                        (homeView)
+                    this.state.user ? homeView : loginView
                 }                
             </div>
         )
