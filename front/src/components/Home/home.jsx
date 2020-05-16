@@ -85,7 +85,7 @@ export default class Home extends Component {
                     src="https://si.wsj.net/public/resources/images/OG-CO816_201904_G_20190422123727.gif"
                 />
                 {
-                    this.state.user ? homeView : loginView
+                    homeView//this.state.user ? homeView : loginView
                 }                
             </div>
         )
