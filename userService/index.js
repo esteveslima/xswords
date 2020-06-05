@@ -5,6 +5,7 @@ const cors = require('cors')
 
 const app = express()
 
+//
 var corsOptions = {
         origin: '*',
         methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
@@ -44,7 +45,7 @@ const PORT = process.env.PORT || 5000
 const server = app.listen(PORT, console.log(`${process.env.NODE_ENV} server, running on port ${process.env.PORT}`.blue.bold)
 );
 
-//Handle unhandled rejections
+//Handle unhandled rejections closing the server
 process.on('unhandledRejection', (err, promise) => {
   console.log(`unhandled Rejection Error: ${err.message}`.bgRed)
   server.close(() => process.exit(1))
