@@ -44,6 +44,7 @@ export default class Login extends Component {
         var json = await response.json()
         
         if (json.status) {      
+            console.log(json.token)
             this.props.onSuccess(json.token)
             this.setState({ visible: false })            
         } else {            
