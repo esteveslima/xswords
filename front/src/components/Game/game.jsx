@@ -2,236 +2,197 @@ import React, { Component } from 'react'
 import { Drawer, List} from 'antd';
 import { ArrowDownOutlined, ArrowRightOutlined} from '@ant-design/icons';
 import './game.css'
+import io from "socket.io-client";
+
 
 export default class Game extends Component {
 
+  #socketIOClient = undefined; //referência ao socket recebido para conexão
+  #typedStringBuilt = '';     //string sendo construída na digitação
+  #myself = undefined;       //cópia do player do cliente atual(apenas para uso local)
+  
+
     constructor(props) {
         super(props)
-          
-        this.state = {  
-
-        }
-    }
-
-
-
-    //separa as lista de dicas[server]
-    initCluesLists = (matchData) => {
-      this.setState({
-        cluesDownList: matchData.clues.down,
-        cluesAcrossList: matchData.clues.across
-      })
-    }
-    
-    //gera a matriz de dados[server]
-    initDataMatrix = (matchData) => {
-      if(matchData.size.rows !== matchData.size.cols) this.props.selfClose()  //server matchmaking
-            
-      const gridMatrix = new Array(matchData.size.rows)
-      for(let line = 0; line < matchData.size.rows; line++){
-        gridMatrix[line] = new Array(matchData.size.cols)        
-        for(let col = 0; col < matchData.size.cols; col++){
-          const element = matchData.grid[line*matchData.size.cols + col]
-          const clueNumber = matchData.gridnums[line*matchData.size.cols + col]
-
-          //separa as letras e numero das dicas
-          gridMatrix[line][col] = {
-            element: element,         //conteudo da celula exibido no momento: letra(caractere), espaços de divisão("."), nao exibido(null)
-            clueNumber: clueNumber,   //numero da dica para exibição, serve de orientação ao jogador
-            acrossWord: undefined,    //numero da palavra 'across' a que esta celula se refere
-            downWord: undefined       //numero da palavra 'down' a que esta celula se refere            
-          }                   
-        }        
-      }
-
-
-      
-      for(let line = 0; line < gridMatrix.length; line++){   
-        let lastAcrossClue         
-        for(let col = 0; col < gridMatrix[line].length; col++){
-          const element = gridMatrix[line][col].element
-          const clueNumber = gridMatrix[line][col].clueNumber
-
-          //atribui cada letra a sua palavra 'across', baseado no numero da dica
-          if(!lastAcrossClue){
-            lastAcrossClue = clueNumber
-            gridMatrix[line][col].acrossWord = lastAcrossClue === 0 ? undefined : lastAcrossClue
-          }else{
-            const isletter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
-            if(isletter){
-              gridMatrix[line][col].acrossWord = lastAcrossClue === 0 ? undefined : lastAcrossClue
-            }else{
-              lastAcrossClue = undefined
-            }
-          } 
-        }
-      }
-
-      for(let col = 0; col < gridMatrix.length; col++){  
-        let lastDownClue         
-        for(let line = 0; line < gridMatrix[col].length; line++){
-          const element = gridMatrix[line][col].element
-          const clueNumber = gridMatrix[line][col].clueNumber
-
-          //atribui cada letra a sua palavra 'down', baseado no numero da dica
-          if(!lastDownClue){
-            lastDownClue = clueNumber
-            gridMatrix[line][col].downWord = lastDownClue === 0 ? undefined : lastDownClue
-          }else{
-            const isletter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
-            if(isletter){
-              gridMatrix[line][col].downWord = lastDownClue === 0 ? undefined : lastDownClue
-            }else{
-              lastDownClue = undefined
-            }
-          } 
-        }
-      }
-
-
-      
-      this.setState({dataMatrix: gridMatrix})
-    }
-
-    //verifica celula e trava[server]
-    wordLock(word){
-      for(let solvedWord of this.state.solvedWords){    //checa se esta na lista de palavras resolvidas
-        if(solvedWord.number === word.number && solvedWord.profile === word.profile) return false;
-      }
-      for(let lockedWord of this.state.serverLockedWords){  //checa se esta na lista de palavras travadas
-        if(lockedWord.number === word.number && lockedWord.profile === word.profile) return false;
-      }
-      this.setState({
-        serverLockedWords: [...this.state.serverLockedWords, word]
-      }, () => {
         
-        //simulando para teste ja o retorno da lista de palavras bloqueadas tanto no momento q estao travadas, quanto no momento em que sao destravadas
-        this.updateLockedWords(this.state.serverLockedWords)
-        setTimeout(() => { 
-          this.setState({            
-            serverLockedWords: this.state.serverLockedWords.filter((lockedWord) => 
-              lockedWord.number !== word.number || lockedWord.profile !== word.profile
-            )
-          }, () => this.updateLockedWords(this.state.serverLockedWords))
-        }, 10000);   
-        //  //  //  //  //  //  //  //  //  //   
-      })
-
+        this.state = {            
+            
+        }
     }
 
-    //atualiza o state baseado no props assim que o componente pai atualiza
-    //faz o reset do state e inicia a conexão com o websocket
-    componentWillReceiveProps({matchData, visible}) {      
+
+
+
+
+    //atualiza(reseta) o state baseado no props assim que o componente pai atualiza    
+    componentWillReceiveProps({visible, gameWSEndpoint}) {  
+      if(!visible && !this.state.visible) return   //evita multiplas chamadas dessa função      
       this.setState({
         ...this.state, 
-        visible,
+        visible,        
+
         dataMatrix: undefined,            
-        cluesDownList: [],
-        cluesAcrossList: [],
+        clues: [],
 
         highlightedWords: [],
         lockedWords: [],
-        solvedWords: [],
-        serverLockedWords: [],    // servidor[apagar]
+        solvedWords: [],        
 
-        players: [],
-
-        myself : undefined,
-        lockedMyself: false,
+        players: [],       
         
-      }, () => this.websocketConnection(matchData)) 
-    }    
-    //conexão websocket para recebimento dos dados e atualizações da partida
-    websocketConnection(matchData){
-      matchData && this.organizeMatchData(matchData) //remover e substituir pela conexao do websocket
+      }, () => this.startGame(gameWSEndpoint)) 
     }
-    //redireciona os dados às funções de acordo com a ação recebida
-    dataRouter(){
+    //faz as chamadas para dar inicio ao jogo
+    startGame = async (gameWSEndpoint) => {
+      console.log('opening game')
 
+      this.#socketIOClient = undefined;
+      this.#typedStringBuilt = '';
+      this.#myself = undefined;
+
+      this.websocketConnection(gameWSEndpoint)      
+    }
+    //fecha drawer do jogo, disconecta o ws e apaga sua referência
+    closeGame(){
+      console.log('closing game')
+
+      this.#socketIOClient.disconnect();
+      this.#socketIOClient = undefined;
+      this.#typedStringBuilt = '';
+      this.#myself = undefined;      
+
+      this.setState({ 
+        visible: false,        
+      }, () => this.props.selfClose() )
     }
 
-    //organiza os dados iniciais da partida[removivel ao se integrar o socket?]
-    organizeMatchData = (matchData) => {
-      console.log(`crossword from ${matchData.publisher} at ${matchData.date}` )
-      this.initPlayers()
-      this.initDataMatrix(matchData)
-      this.initCluesLists(matchData)
+
+
+
+
+    //inicia a conexão websocket para recebimento dos dados e atualizações da partida
+    websocketConnection = (gameWSEndpoint) => {      
+      const socketIOClient = io(gameWSEndpoint)  
+            
+
+      
+      socketIOClient.on('connect', () => {        
+        this.#socketIOClient = socketIOClient
+        const myselfId = 1//Date.now()   //gerando id aleatorio(substituir pelo id do token)
+        socketIOClient.emit('connectPlayer', myselfId)
+        console.log('ws connected')
+      }); 
+
+      socketIOClient.on('disconnect', () => {        
+        console.log('ws disconnected')
+      });
+      
+      socketIOClient.on('dataMatrix', (dataMatrix) => { this.updateAllMatchMatrix(dataMatrix) })
+
+      socketIOClient.on('clues', (clues) => { this.updateAllClues(clues) })
+
+      socketIOClient.on('lockedWords', (lockedWords) => { this.updateAllLockedWords(lockedWords) })
+
+      socketIOClient.on('solvedWords', (solvedWords) => { this.updateAllSolvedWords(solvedWords) })
+
+      socketIOClient.on('players', (players) => { this.updateAllPlayers(players) })
+
+      socketIOClient.on('player', (player) => { this.setMyselfPlayerObject(player) })
+
+      socketIOClient.on('errorMessage', (errorMessage) => console.log(errorMessage))
     }
 
-    //dados iniciais de cada jogador
-    initPlayers(players){
-      players = [                      
-              {id: 1, score: 0, color: {R: 255, G: 0, B: 0}},
-              {id: 2, score: 0, color: {R: 0, G: 255, B: 0}},
-              {id: 3, score: 0, color: {R: 0, G: 0, B: 255}},          
-      ]
-      const myself = {id: 333, score: 0, color: {R: 255, G: 110, B: 0}}
-      //setar myself procurando o proprio id
-      this.setState({
-        players: players,
-        myself: myself,
-      })
-    }
+    
+
     //altera os dados de um jogador(a cada atualização do score)
     updatePlayer(player){
 
     }
-    //dados inicias para construção da matriz de letras
-    initMatchGrid(match){
-
-    }
     //alteração de cada posição da matriz de letras(a cada modificação de um jogador)
-    updateMatchGrid(modification){
-
-    }
-    //dados das listas de dicas
-    initCluesList(clues){
+    updateMatchMatrix(modification){
 
     }
     //alteração dos dados das listas de dicas(a cada atualização de alguma resolvida)
-    updateCluesList(clueUpdate){
+    updateClue(clueUpdate){
 
     }
-    //atualização da lista de palavras selecionadas e travadas pelos jogadores
-    updateLockedWords(lockedWords){          
+
+    //atualiza todos os dados dos jogadores(a cada atualização do score)
+    updateAllPlayers(players){
+      this.setState({ players: players });
+    }    
+    //atualiza toda a matriz de letras(a cada modificação de um jogador)
+    updateAllMatchMatrix(dataMatrix){      
+      this.setState({ dataMatrix: dataMatrix });
+    }    
+    //atualiza todos os dados das listas de dicas(a cada atualização de alguma resolvida)
+    updateAllClues(clues){
+      this.setState({ clues: clues });
+    }    
+    //atualiza toda a lista de palavras travadas pelos jogadores
+    updateAllLockedWords(lockedWords){  
+      //const lockedMyself = this.state.myself && lockedWords.map((word) => word.player.id).includes(this.state.myself.id)
+      if(this.#myself){        
+        this.#myself.locked = lockedWords.find((word) => word.player.id === this.#myself.id)
+        if(!this.#myself.locked) this.#typedStringBuilt = ''
+      }
+      
       this.setState({ 
-        lockedWords: lockedWords,
-        lockedMyself: lockedWords.map((word) => word.player.id).includes(this.state.myself.id)
-      }, () => this.updateHighlightedWords(this.state.lockedWords))
-    }
-    //atualização geral das palavras destacadas ao receber a lista de palavras selecionadas e travadas
-    updateHighlightedWords(words){
-      //dessa forma ao atualizar se retira destaque da palavra sob o evento hover do mouse(consertar?)
-      this.setState({
-        highlightedWords: words
+        lockedWords: lockedWords,           
+      }, () => { 
+        this.updateAllHighlightedWords(this.state.lockedWords) 
       })
     }
-    //atualização das palavras resolvidas
-    updateSolvedWords(solvedWords){
+    //atualiza todas as palavras destacadas ao receber a lista de palavras travadas(atualização apenas local?)
+    updateAllHighlightedWords(highlightedWords){
+      //dessa forma ao atualizar se retira destaque da palavra sob o evento hover do mouse(consertar?)
+      this.setState({
+        highlightedWords: highlightedWords
+      })
+    }
+    //atualiza todas as palavras resolvidas
+    updateAllSolvedWords(solvedWords){
       this.setState({ 
         solvedWords: solvedWords 
       })
     }
 
+    //recupera objeto que representa o cliente atual do jogo
+    setMyselfPlayerObject(player){
+      this.#myself = player
+      this.#myself.locked = this.state.lockedWords.find((word) => word.player.id === this.#myself.id)
+    }
+
 
 
     //faz requisição ao socket para travar a palavra
-    requestWordLock(wordToLock){      
-      this.wordLock(wordToLock)   //envia pelo socket
-      //[server part] se aprovado, deve retornar nova lista de palavras travadas com esta adicionada
- 
-      //se aprovado, habilitar digitação da palavra, se recusado exibir mensagem de erro
+    requestWordLock(wordToLock){
+      if(!this.#socketIOClient) return;
+      this.#socketIOClient.emit('lockWord', wordToLock)
     }    
-    //detecta a tecla pressionada no teclado
+    //envia as teclas pressionadas do teclado caso cliente tenha travado uma palavra(não detecta algumas teclas como o backspace[feature?])
     readKeyboard(event){
-      return event.key; 
+      if(!this.#myself) return;
+      if(!this.#socketIOClient) return;
+      
+      if(this.#myself.locked){
+        this.#typedStringBuilt += event.key;
+        const update = {
+          word: this.#myself.locked,
+          entry: this.#typedStringBuilt,
+        }
+        this.#socketIOClient.emit('updateMatrix', update)
+      }      
     }
     
-    
 
 
-    //verifica se palavra esta disponivel para se realizar ações sobre ela
-    isWordAvailable(word){
+
+
+    //verifica se palavra esta disponivel para se realizar ações de lock e hover sobre ela
+    isWordAvailable(word){      
+      if(!this.#myself) return false;
+      if(this.#myself.locked) return false;
       for(let solvedWord of this.state.solvedWords){    //checa se esta na lista de palavras resolvidas
         if(solvedWord.number === word.number && solvedWord.profile === word.profile) return false;
       }
@@ -240,6 +201,7 @@ export default class Game extends Component {
       }
       return true;
     }
+
     //ao evento de mouseOver adiciona a palavra à lista de palavras destacadas
     highlightWord(word){
       const updatedHighlighted = [...this.state.highlightedWords, word]      
@@ -247,6 +209,7 @@ export default class Game extends Component {
         highlightedWords: updatedHighlighted
       })      
     }
+
     //ao evento de mouseOut remove a palavra da lista de palavras destacadas
     restoreHighlightedWord(word){
       const updatedHighlighted = this.state.highlightedWords.filter((highlightedWord) => 
@@ -313,18 +276,25 @@ export default class Game extends Component {
             };                     
           }
         }        
-        if(isHighlighted){    //correção para remover o rgb do branco caso a celula possua cor de destaque
+        if(isHighlighted){    //correção para remover o rgb do branco inicial caso a celula possua cor de destaque
           letterBackground = {
             R: letterBackground.R - 255,
             G: letterBackground.G - 255, 
             B: letterBackground.B - 255,
           };
         }        
-        letterBackground = {  //correção para evitar q o limite do valor do rgb seja ultrapassado
+        letterBackground = {      //correção para evitar q o limite do valor do rgb seja ultrapassado
           R: letterBackground.R > 255 ? letterBackground.R - 255 : letterBackground.R,
           G: letterBackground.G > 255 ? letterBackground.G - 255 : letterBackground.G,
           B: letterBackground.B > 255 ? letterBackground.B - 255 : letterBackground.B
         };
+        if(isHighlighted &&letterBackground.R > 250 && letterBackground.G > 250 && letterBackground.B > 250){
+          letterBackground = {      //correção para celulas resultando em cor branca
+            R: letterBackground.R - 100,
+            G: letterBackground.G - 100, 
+            B: letterBackground.B - 100,
+          };
+        }
       }          
       const fieldBackground = `rgba(${letterBackground.R}, ${letterBackground.G}, ${letterBackground.B}, 1)`
       
@@ -367,20 +337,17 @@ export default class Game extends Component {
                 //backgroundColor: '#00ff00'
               }}
               onMouseOver={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'down', number: item.downWord, player: this.state.myself}
+                const word = {profile: 'down', number: item.downWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.highlightWord(word);
               }}
               onMouseOut={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'down', number: item.downWord, player: this.state.myself}
+                const word = {profile: 'down', number: item.downWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.restoreHighlightedWord(word)
               }}
-              onClick={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'down', number: item.downWord, player: this.state.myself}
+              onClick={() => {                
+                const word = {profile: 'down', number: item.downWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.requestWordLock(word)
               }}
@@ -392,20 +359,17 @@ export default class Game extends Component {
                 //backgroundColor: '#ff0000'
               }}
               onMouseOver={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'across', number: item.acrossWord, player: this.state.myself}
+                const word = {profile: 'across', number: item.acrossWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.highlightWord(word);
               }}
               onMouseOut={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'across', number: item.acrossWord, player: this.state.myself}
+                const word = {profile: 'across', number: item.acrossWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.restoreHighlightedWord(word)
               }}
               onClick={() => {
-                if(this.state.lockedMyself) return;
-                const word = {profile: 'across', number: item.acrossWord, player: this.state.myself}
+                const word = {profile: 'across', number: item.acrossWord, player: this.#myself}
                 if(!this.isWordAvailable(word)) return;                
                 this.requestWordLock(word)
               }}
@@ -441,7 +405,7 @@ export default class Game extends Component {
     }
 
     //constrói o componente lista de dicas
-    buildCluesLists(){
+    buildClues(){
       let matrixSize = window.innerWidth < window.innerHeight ? window.innerWidth*0.9 : window.innerHeight*0.9 
       matrixSize = Math.floor(matrixSize) + Math.floor(matrixSize)%this.state.dataMatrix.length + 1      
       const listWidth = window.innerWidth < window.innerHeight ? window.innerWidth*0.93 : window.innerWidth*0.8 - matrixSize
@@ -472,7 +436,7 @@ export default class Game extends Component {
             <List
               size="small"                   
               bordered
-              dataSource={this.state.cluesDownList}
+              dataSource={this.state.clues.down}
               renderItem={item => <List.Item>{item}</List.Item>}
               style={{marginTop: 10}}                          
             />
@@ -490,7 +454,7 @@ export default class Game extends Component {
             <List
               size="small"                   
               bordered
-              dataSource={this.state.cluesAcrossList}
+              dataSource={this.state.clues.across}
               renderItem={item => <List.Item>{item}</List.Item>} 
               style={{marginTop: 10}}                                     
             />
@@ -513,14 +477,14 @@ export default class Game extends Component {
                   }}
         >
           {this.buildWordsMatrix()}
-          {this.buildCluesLists()}
+          {this.buildClues()}
           {this.buildScoreList()}
 
         </div>
       )
     }
 
-
+    
     
 
 
@@ -532,7 +496,7 @@ export default class Game extends Component {
                 placement="bottom"
                 closable={true}
                 height={"100%"}
-                onClose={() => this.setState({ visible: false }, () => this.props.selfClose() )}
+                onClose={() => this.closeGame()}
                 visible={this.state.visible}
                 onKeyPress={(event) => this.readKeyboard(event)}
             >
