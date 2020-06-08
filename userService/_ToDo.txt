@@ -4,7 +4,7 @@ express	dotenv:		node_modules and config file
 					create config folder and file
 					set scripts accordingly in package.json(and with the config variables if needed)
 
-nodemon:			autoupdate server
+nodemon:			autoupdate server(modify the "scripts" objects in package.json)
 
 morgan:				option for log middleware
 

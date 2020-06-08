@@ -5,7 +5,7 @@ const cors = require('cors')
 
 const app = express()
 
-//
+//Enable Cors
 var corsOptions = {
         origin: '*',
         methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
@@ -27,6 +27,7 @@ connectDatabase()
 //Middleware Logger
 const morgan = require('morgan')
 app.use(morgan('dev'))
+
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 
@@ -42,7 +43,9 @@ app.use(errorhandler)
 
 //Start Server
 const PORT = process.env.PORT || 5000
-const server = app.listen(PORT, console.log(`${process.env.NODE_ENV} server, running on port ${process.env.PORT}`.blue.bold)
+const server = app.listen(
+  PORT, 
+  console.log(`${process.env.NODE_ENV} server, running on port ${process.env.PORT}`.blue.bold)
 );
 
 //Handle unhandled rejections closing the server

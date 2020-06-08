@@ -9,12 +9,13 @@ import './home.css'
 
 export default class Home extends Component {
 
+    #gameWSEndpoint = undefined;
+
     constructor(props) {
-        super(props)
+        super(props)        
 
         this.state = {
-            user: undefined,                        
-            matchData: undefined,
+            user: undefined,                                    
             gameVisible: false,
             storeVisible: false,
             queueVisible: false,
@@ -39,11 +40,11 @@ export default class Home extends Component {
 
         const queueView = (
             <Queue visible={this.state.queueVisible} selfClose={()=> this.setState({queueVisible: false})} 
-                onFinish={(matchData) => {                                         
+                onFinish={(gameWSEndpoint) => {
+                    this.#gameWSEndpoint = gameWSEndpoint                    
                     this.setState({
                         queueVisible: false, 
-                        gameVisible: true, 
-                        matchData: matchData
+                        gameVisible: true,                         
                     })  
                     
                 }}
@@ -51,7 +52,7 @@ export default class Home extends Component {
         )
 
         const gameView = (
-            <Game visible={this.state.gameVisible} selfClose={()=> this.setState({gameVisible: false})} matchData={this.state.matchData}/>
+            <Game visible={this.state.gameVisible} selfClose={()=> this.setState({gameVisible: false})} gameWSEndpoint={this.#gameWSEndpoint}/>
         )
 
         const buttonStore = (

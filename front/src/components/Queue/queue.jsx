@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Drawer } from 'antd';
 import { HourglassTwoTone } from '@ant-design/icons';
 import './queue.css'
+import { QUEUE_SERVER } from '../../config/urls'
 
 export default class Queue extends Component {
 
@@ -15,27 +16,50 @@ export default class Queue extends Component {
 
     }
 
-    componentWillReceiveProps({visible}) {
+    componentWillReceiveProps({visible}) {   
+        if(!visible && !this.state.visible) return       //evita multiplas chamadas dessa função             
         this.setState({
           ...this.state, 
           visible
-        }, () => this.state.visible && this.generateMatchData())      
+        }, () => this.state.visible && this.connectToQueue())
     }
 
+    connectToQueue = async () => {
+        console.log('joining queue')
 
-    generateMatchData = async () => {
-        const year = Math.floor(1976 + Math.random()*41)        //gera até 2016 apenas
-        const month = ('0' + Math.floor(Math.random()*12 + 1)).slice(-2)
-        const day = ('0' + Math.floor(Math.random()*28 + 1)).slice(-2)
-        const response = await fetch(`https://raw.githubusercontent.com/doshea/nyt_crosswords/master/${year}/${month}/${day}.json`, {
-            method: "GET"        
-        })                
-        var json = await response.json()
-        
-        setTimeout(() => {
-            this.props.selfClose()
-            this.props.onFinish(json)
-        }, 1000);            
+        //simulando a requisição q o server queue faz para pedir a geração de uma partida
+        const response = await fetch(`${QUEUE_SERVER}/generateMatch`, {
+            method: "GET",
+            headers: {              
+              'Content-Type': 'application/json'
+            }            
+        })             
+        this.leaveQueue()           
+        var json = await response.json()        
+        if (json.status) {            
+           this.props.onFinish(json.endPoint)
+        } else {                        
+            console.log('error:' + json.error)
+        }
+
+        //requisição para se conectar à queue(retorna erro ou endpoint do ws da queue)
+        //ws da fila da queue(retorna erro ou endpoint do ws do game)
+
+        /*setTimeout(() => {
+            this.leaveQueue()
+            const gameWSEndpoint = "http://127.0.0.1:7000/matches";
+            this.props.onFinish(gameWSEndpoint)
+        }, 1000); */
+    }
+
+    leaveQueue(){
+        console.log('leaving queue')
+
+        //desconectar do ws da queue
+
+        this.setState({ 
+            visible: false 
+        }, () => this.props.selfClose())
     }
 
     render() {
@@ -46,7 +70,7 @@ export default class Queue extends Component {
                 placement="top"
                 closable={true}
                 height={200}
-                onClose={() => this.setState({ visible: false }, () => this.props.selfClose() )}
+                onClose={() => this.leaveQueue()}
                 visible={this.state.visible}
             >
                 <p>Matchmaking...</p>
