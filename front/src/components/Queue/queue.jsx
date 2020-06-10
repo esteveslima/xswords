@@ -27,6 +27,9 @@ export default class Queue extends Component {
     connectToQueue = async () => {
         console.log('joining queue')
 
+        //1- requisição para se conectar à queue(retorna erro ou endpoint do ws da queue)
+        //2- ws da fila da queue(retorna erro ou namespace do ws do game)
+
         //simulando a requisição q o server queue faz para pedir a geração de uma partida
         const response = await fetch(`${QUEUE_SERVER}/generateMatch`, {
             method: "GET",
@@ -36,20 +39,14 @@ export default class Queue extends Component {
         })             
         this.leaveQueue()           
         var json = await response.json()        
-        if (json.status) {            
-           this.props.onFinish(json.endPoint)
+        if (json.status) {
+            //simulando já o retorno do ws da queue com a url + namespace do gameService
+            this.props.onFinish('http://127.0.0.1:7000/' + json.nameSpace)       //substituir pela url do gameService antes de retornar do queueService
         } else {                        
             console.log('error:' + json.error)
         }
 
-        //requisição para se conectar à queue(retorna erro ou endpoint do ws da queue)
-        //ws da fila da queue(retorna erro ou endpoint do ws do game)
-
-        /*setTimeout(() => {
-            this.leaveQueue()
-            const gameWSEndpoint = "http://127.0.0.1:7000/matches";
-            this.props.onFinish(gameWSEndpoint)
-        }, 1000); */
+        
     }
 
     leaveQueue(){
