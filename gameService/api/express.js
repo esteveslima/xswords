@@ -23,5 +23,5 @@ app.use('/', matchesRouter)
 
 const expressServer = app.listen(
   process.env.PORT_EXPRESS, 
-  console.log(`${process.env.NODE_ENV} express server, running on port ${process.env.PORT_EXPRESS}`)
+  console.log(`${process.env.NODE_ENV} game express server, running on port ${process.env.PORT_EXPRESS}`)
 );

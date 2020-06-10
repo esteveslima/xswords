@@ -8,7 +8,7 @@ const socketIOServer = io(socketIO);
 
 socketIO.listen(
   process.env.PORT_SOCKETIO,
-  console.log(`${process.env.NODE_ENV} socket.io server, running on port ${process.env.PORT_SOCKETIO}`)
+  console.log(`${process.env.NODE_ENV} game socket server, running on port ${process.env.PORT_SOCKETIO}`)
 );
 
 

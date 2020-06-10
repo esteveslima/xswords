@@ -210,6 +210,7 @@ console.log(this.#answers)    //print das respostas para teste
   }
 
 
+
   getMatchMatrix = () => { return this.#matchMatrix; }
   getClues = () => { return this.#clues; }
   getLockedWords = () => { return this.#lockedWords; }
@@ -276,6 +277,7 @@ console.log(this.#answers)    //print das respostas para teste
       if(isLetterSolved){
         //insere o valor ja resolvido atual do campo na string de entrada
         update.entry = update.entry.slice(0, entryIndex) + this.#matchMatrix[matrixIndex.row][matrixIndex.col].element + update.entry.slice(entryIndex)
+        //entryIndex--;   //mantém a letra em análise para a próxima iteração, enquanto atualiza a posição do campo na matriz
       }else{
         this.#matchMatrix[matrixIndex.row][matrixIndex.col].element = letter  //atualiza o valor do campo     
       }     
@@ -287,36 +289,23 @@ console.log(this.#answers)    //print das respostas para teste
       //testa se chegou ao final da entrada de dados
       const overflowMatrixLimits = (matrixIndex.row >= this.#matchMatrix.length) || (matrixIndex.col >= this.#matchMatrix.length)
       const foundDivider = !overflowMatrixLimits && this.#matchMatrix[matrixIndex.row][matrixIndex.col].element === '.'
-      if(overflowMatrixLimits || foundDivider){   //finalizou de inserir a palavra
-                      
-        //checa se palavra inserida foi solucionada
-        const wordAnswer = this.#answers[update.word.profile].find((answerObject) => {
+      if(overflowMatrixLimits || foundDivider){   //finalizou de inserir a palavra                
+        
+        const answer = this.#answers[update.word.profile].find((answerObject) => {
           return answerObject.clueNumber === update.word.number}
         ).value
-        if(update.entry === wordAnswer){
-          this.#solvedWords = [...this.#solvedWords, update.word]
-          this.#incrementPlayerScore(update.word.player, wordAnswer.length*10)          
-          
+
+        //devido ao bug de não se solucionar outras palavras ao se solucioanr uma com sentido oposto, deve-se reduzir a entrada para que pelo menos o primeiro que digitar algo receba a pontuação daquela palavra acidentalmente solucionada mas não reclamada por ninguem
+        update.entry = update.entry.substring(0, answer.length)
+
+        //checa se palavra inserida foi solucionada
+        if(update.entry === answer){                             
           //DEVERIA VARRER CADA LETRA DA PALAVRA RECEM RESOLVIDA, PROCURANDO OUTRAS POSSIVEIS SOLUCIONADAS
           //LEMBRAR DE DESTRAVAR OS JOGADORES LIGADOS À ESSAS PALAVRAS DA VARREDURA 
           //CRIAR METODO PARA RECUPERAR PALAVRA A PARTIR DO DATAMATRIX
           //PASSAR A VERIFICAR PELO METODO CRIADO AO INVES DE PROCURAR A RESPOSTA NA LISTA DE RESPOSTAS          
-          
-          //varre todas as letras da palavra preenchida para verificar outras possiveis palavras solucionadas
-          /*
-          matrixIndex = update.startIndex;            
-          for(let index = 0; index < update.entry.length ; index++){
-            const reviewedField = this.#matchMatrix[matrixIndex.row][matrixIndex.col];
-            const fieldWordReviewed = update.word.profile === 'across' ? reviewedField.downWord : reviewedField.acrossWord;
-            const wordReviewed = {
-              number: fieldWordReviewed,
-              profile: update.word.profile === 'across' ? 'down' : 'across'
-            }
-            if(this.#isWordSolved(wordReviewed)) continue;
-
-
-          }
-          */
+          this.#solvedWords = [...this.#solvedWords, update.word]
+          this.#incrementPlayerScore(update.word.player, answer.length*10)
         }
 
         return true;
@@ -324,7 +313,7 @@ console.log(this.#answers)    //print das respostas para teste
     }
 
     return false;
-  }
+  }  
 
   connectPlayer = (connectedPlayer) => {    
     const player = this.#players.find((player) => player.id === connectedPlayer.id);    
