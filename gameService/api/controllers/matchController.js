@@ -1,17 +1,12 @@
 const { createMatchNamespace } = require('../../socket/wsNamespaces')
-var saveNsp;    //GAMBIARRA PRO SERVIDOR SÓ RETORNAR O PRIMEIRO NAMESPACE CRIADO 
-               //E SIMULAR OS JOGADORES ENTRANDO NA MESMA PARTIDA
+var saveNsp;    //GAMBIARRA PRO SERVIDOR SÓ RETORNAR UM NAMESPACE FIXO PARA TESTES //apagar para release
 exports.generateMatch = async (req, res, next) => {
-if(saveNsp){
-  const endPoint = `http://127.0.0.1:7000/${saveNsp}`   
-  return res.status(200).json({ status: true, endPoint: endPoint })
-}
 
+if(saveNsp) return res.status(200).json({ status: true, nameSpace: saveNsp })     //apagar para release
   const nameSpace = await createMatchNamespace()
-saveNsp = nameSpace
-  if(nameSpace){
-    const endPoint = `http://127.0.0.1:7000/${nameSpace}`
-    return res.status(200).json({ status: true, endPoint: endPoint })
+saveNsp = nameSpace                                                               //apagar para release
+  if(nameSpace){    
+    return res.status(200).json({ status: true, nameSpace: nameSpace })
   }else{
     //tentar recriar?
     return res.status(500).json({ status: false })

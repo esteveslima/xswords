@@ -7,6 +7,7 @@ import React, { Component } from 'react'
 import { ShopTwoTone } from '@ant-design/icons';
 import './home.css'
 
+
 export default class Home extends Component {
 
     #gameWSEndpoint = undefined;
@@ -15,7 +16,7 @@ export default class Home extends Component {
         super(props)        
 
         this.state = {
-            user: undefined,                                    
+            user: Date.now(),           //gerando um id aleatorio para testes, substituido pelo id do login
             gameVisible: false,
             storeVisible: false,
             queueVisible: false,
@@ -35,11 +36,13 @@ export default class Home extends Component {
         )
 
         const storeView = (
-            <Store visible={this.state.storeVisible} selfClose={()=> this.setState({storeVisible: false})}/>
+            <Store visible={this.state.storeVisible} user={this.state.user}
+            selfClose={()=> this.setState({storeVisible: false})}/>
         )
 
         const queueView = (
-            <Queue visible={this.state.queueVisible} selfClose={()=> this.setState({queueVisible: false})} 
+            <Queue visible={this.state.queueVisible} user={this.state.user}
+                selfClose={()=> this.setState({queueVisible: false})} 
                 onFinish={(gameWSEndpoint) => {
                     this.#gameWSEndpoint = gameWSEndpoint                    
                     this.setState({
@@ -52,7 +55,9 @@ export default class Home extends Component {
         )
 
         const gameView = (
-            <Game visible={this.state.gameVisible} selfClose={()=> this.setState({gameVisible: false})} gameWSEndpoint={this.#gameWSEndpoint}/>
+            <Game visible={this.state.gameVisible} user={this.state.user} gameWSEndpoint={this.#gameWSEndpoint}
+                selfClose={()=> this.setState({gameVisible: false})} 
+            />
         )
 
         const buttonStore = (

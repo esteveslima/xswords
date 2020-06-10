@@ -8,21 +8,38 @@ module.exports = class Match{
     {R: 0, G: 0, B: 255},
     {R: 255, G: 255, B: 0},
     {R: 255, G: 0, B: 255},
-    {R: 0, G: 255, B: 255},    
-  ]  //dessa forma só suporta 6 players(implementar gerador de cores dinamico)
+    {R: 0, G: 255, B: 255},
+    {R: 125, G: 0, B: 0},
+    {R: 0, G: 125, B: 0},
+    {R: 0, G: 0, B: 125},
+    {R: 125, G: 125, B: 0},
+    {R: 125, G: 0, B: 125},
+    {R: 0, G: 125, B: 125},
+    {R: 125, G: 0, B: 0},
+    {R: 0, G: 125, B: 0},
+    {R: 0, G: 0, B: 125},
+    {R: 125, G: 125, B: 0},
+    {R: 125, G: 0, B: 125},
+    {R: 0, G: 125, B: 125},   
+  ]  //dessa forma só suporta o numero de cores de players(implementar gerador de cores dinamico)
 
-  #dataMatrix = undefined;
-  #clues = [];
-  #lockedWords = [];
-  #solvedWords = [];
-  #players = [];  
+  #dataMatrix = undefined;      //matriz com os dados puros(gabarito)
+  #matchMatrix = undefined;     //matriz que representa o estado atual do jogo
+  #clues = [];                  //lista das dicas across e down
+  #answers = [];                //lista de respostas de cada dica  
+  #lockedWords = [];            //lista de palavras travadas pelos jogadores
+  #solvedWords = [];            //lista de palavras resolvidas pelos jogadores
+  #players = [];                //lista de jogadores que abriram conexão com o namespace do ws
 
-  constructor(rawMatchData){
-    if(rawMatchData === undefined) throw new Error('Class must be created with the builder method')
-    this.#initDataMatrix(rawMatchData);
-    this.#initClues(rawMatchData);
+  constructor(rawMatchData){    //deve seguir esta ordem pois alguns dados podem depender de outros
+    if(rawMatchData === undefined) throw new Error('Class must be created with the builder method')    
+    this.#initClues(rawMatchData);              
+    this.#initAnswers(rawMatchData);            //copia o numero das dicas, já que são listas pareadas
+    this.#initDataMatrices(rawMatchData);       
     this.#initWordsLists();
     this.#initPlayers();
+  
+console.log(this.#answers)    //print das respostas para teste
   }
 
 
@@ -38,44 +55,41 @@ module.exports = class Match{
     const response = await fetch(`https://raw.githubusercontent.com/doshea/nyt_crosswords/master/${year}/${month}/${day}.json`, {
       method: "GET"        
     })        
-    const rawMatchData = await response.json()    
+    const rawMatchData = await response.json()
         
     return new Match(rawMatchData)
   }
 
-  #initDataMatrix = (rawMatchData) => {       
+  #initDataMatrices = (rawMatchData) => {       
       const gridMatrix = new Array(rawMatchData.size.rows)
-      for(let line = 0; line < rawMatchData.size.rows; line++){
+      for(let line = 0; line < rawMatchData.size.rows; line++){   //separa o conteudo e o numero da dica(exibição)
         gridMatrix[line] = new Array(rawMatchData.size.cols)        
         for(let col = 0; col < rawMatchData.size.cols; col++){
-          const element = rawMatchData.grid[line*rawMatchData.size.cols + col]
+          const element = rawMatchData.grid[line*rawMatchData.size.cols + col]          
           const clueNumber = rawMatchData.gridnums[line*rawMatchData.size.cols + col]
 
           //separa as letras e numero das dicas
           gridMatrix[line][col] = {
-            element: element,         //conteudo da celula exibido no momento: letra(caractere), espaços de divisão("."), nao exibido(null)
-            clueNumber: clueNumber,   //numero da dica para exibição, serve de orientação ao jogador
-            acrossWord: undefined,    //numero da palavra 'across' a que esta celula se refere
-            downWord: undefined       //numero da palavra 'down' a que esta celula se refere            
+            element: element,             //conteudo da celula exibido no momento: letra(caractere), espaços de divisão("."), nao exibido(null)
+            clueNumber: clueNumber,       //numero da dica para exibição, serve de orientação ao jogador
+            acrossWord: undefined,        //numero da palavra 'across' a que esta celula se refere
+            downWord: undefined           //numero da palavra 'down' a que esta celula se refere            
           }                   
         }        
       }
-
-
       
-      for(let line = 0; line < gridMatrix.length; line++){   
+      for(let line = 0; line < gridMatrix.length; line++){       //atribui em cada letra a sua palavra 'across', baseado no numero da dica
         let lastAcrossClue         
         for(let col = 0; col < gridMatrix[line].length; col++){
           const element = gridMatrix[line][col].element
           const clueNumber = gridMatrix[line][col].clueNumber
-
-          //atribui cada letra a sua palavra 'across', baseado no numero da dica
+          
           if(!lastAcrossClue){
             lastAcrossClue = clueNumber
             gridMatrix[line][col].acrossWord = lastAcrossClue === 0 ? undefined : lastAcrossClue
           }else{
-            const isletter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
-            if(isletter){
+            const isLetter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
+            if(isLetter){
               gridMatrix[line][col].acrossWord = lastAcrossClue === 0 ? undefined : lastAcrossClue
             }else{
               lastAcrossClue = undefined
@@ -83,20 +97,19 @@ module.exports = class Match{
           } 
         }
       }
-
-      for(let col = 0; col < gridMatrix.length; col++){  
+      
+      for(let col = 0; col < gridMatrix.length; col++){       //atribui em cada letra a sua palavra 'down', baseado no numero da dica
         let lastDownClue         
         for(let line = 0; line < gridMatrix[col].length; line++){
           const element = gridMatrix[line][col].element
           const clueNumber = gridMatrix[line][col].clueNumber
-
-          //atribui cada letra a sua palavra 'down', baseado no numero da dica
+          
           if(!lastDownClue){
-            lastDownClue = clueNumber
+            lastDownClue = clueNumber            
             gridMatrix[line][col].downWord = lastDownClue === 0 ? undefined : lastDownClue
           }else{
-            const isletter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
-            if(isletter){
+            const isLetter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");          
+            if(isLetter){
               gridMatrix[line][col].downWord = lastDownClue === 0 ? undefined : lastDownClue
             }else{
               lastDownClue = undefined
@@ -104,11 +117,57 @@ module.exports = class Match{
           } 
         }
       }
-
-      this.#dataMatrix = gridMatrix;
+      
+      //copiando dados da matriz
+      this.#dataMatrix = gridMatrix.map((matrixRow) => {        
+        return matrixRow.map((matrixField) => {
+          return {...matrixField}
+        })
+      })
+      
+      //copiando dados da matriz removendo as letras(para representar a partida)
+      this.#matchMatrix = gridMatrix.map((matrixRow) => {        
+        return matrixRow.map((matrixField) => {
+          let element = matrixField.element;
+          const isLetter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");
+          if(isLetter) matrixField.element = null;
+          return matrixField
+        })
+      })
   }
   #initClues = (rawMatchData) => {
-    this.#clues = rawMatchData.clues
+    const across = rawMatchData.clues.across.map((acrossClue) => {
+      return {
+        description: acrossClue,
+        number: +acrossClue.substr(0, acrossClue.indexOf('.'))
+      }      
+    })
+    const down = rawMatchData.clues.down.map((downClue) => {
+      return {
+        description: downClue,
+        number: +downClue.substr(0, downClue.indexOf('.'))
+      }
+    })
+    
+    this.#clues = {across, down}    
+  }
+  #initAnswers = (rawMatchData) => {
+    const across = rawMatchData.answers.across.map((acrossAnswer) => {
+      const currentIndex = rawMatchData.answers.across.indexOf(acrossAnswer)
+      return {
+        value: acrossAnswer,
+        clueNumber: this.#clues.across[currentIndex].number
+      }
+    })
+    const down = rawMatchData.answers.down.map((downAnswer) => {
+      const currentIndex = rawMatchData.answers.down.indexOf(downAnswer)
+      return {
+        value: downAnswer,
+        clueNumber: this.#clues.down[currentIndex].number
+      }
+    })
+    
+    this.#answers = {across, down}
   }
   #initWordsLists = () => {
     this.#lockedWords = [];
@@ -120,74 +179,12 @@ module.exports = class Match{
 
 
 
-  getDataMatrix = () => { return this.#dataMatrix; }
-  getClues = () => { return this.#clues; }
-  getLockedWords = () => { return this.#lockedWords; }
-  getSolvedWords = () => { return this.#solvedWords; }
-  getPlayers = () => { return this.#players; }
-  getConnectedPlayers = () => { return this.#players.filter((player) => player.connected === true); }  
-  getPlayer = (playerId) => { return this.#players.find((player) => player.id === playerId); }
-
-
-
-  lockWord = (word) => {
-    for(let solvedWord of this.#solvedWords){    //checa se esta na lista de palavras resolvidas
-      if(solvedWord.number === word.number && solvedWord.profile === word.profile) return false;
-    }
-    for(let lockedWord of this.#lockedWords){  //checa se esta na lista de palavras travadas
-      if(lockedWord.number === word.number && lockedWord.profile === word.profile) return false;
-    }
-
-    this.#lockedWords = [...this.#lockedWords, word]    
-    return true
-  }
-  unlockWord = (word) => {
-    this.#lockedWords = this.#lockedWords.filter((lockedWord) => 
-      lockedWord.number !== word.number || lockedWord.profile !== word.profile
-    )
-    return true;
-  }
-
-  updateDataMatrix = (update) => {
-
-  }
-
-  connectPlayer = (connectedPlayer) => {
-    for(let player of this.#players){
-      if(player.id === connectedPlayer.id){
-        player.connected = true
-        return true
-      }
-    }
-    
-    return this.#initPlayer(connectedPlayer)    
-  }  
   #initPlayer = (player) => {
     player.connected = true
     player.score = 0
     player.color = this.#playerColors[this.#players.length]
     this.#players = [...this.#players, player]
     return true;
-  }
-  disconnectPlayer = (disconnectedPlayer) => {
-    for(let player of this.#players){
-      if(player.id === disconnectedPlayer.id){
-        player.connected = false
-        return true
-      }
-    }
-
-    return false;
-  }
-  disconnectPlayerByConnection = (socketId) => {    
-    for(let player of this.#players){
-      if(player.id === socketId){
-        player.connected = false
-        return true
-      }
-    }
-
-    return false;
   }
   #incrementPlayerScore = (updatedPlayer, addedPoints) => {
     for(let player of this.#players){
@@ -199,5 +196,155 @@ module.exports = class Match{
 
     return false;
   }
+  #isWordSolved = (word) => { 
+    for(let solvedWord of this.#solvedWords){    //checa se esta na lista de palavras resolvidas
+      if(solvedWord.number === word.number && solvedWord.profile === word.profile) return true;
+    }
+    return false;
+  }
+  #isWordLocked = (word) => {
+    for(let lockedWord of this.#lockedWords){  //checa se esta na lista de palavras travadas
+      if(lockedWord.number === word.number && lockedWord.profile === word.profile) return true;
+    }
+    return false;
+  }
+
+
+  getMatchMatrix = () => { return this.#matchMatrix; }
+  getClues = () => { return this.#clues; }
+  getLockedWords = () => { return this.#lockedWords; }
+  getSolvedWords = () => { return this.#solvedWords; }
+  getPlayers = () => { return this.#players; }
+  getConnectedPlayers = () => { 
+    return this.#players.filter((player) => player.connected === true); 
+  }  
+  getPlayer = (playerId) => { 
+    return this.#players.find((player) => player.id === playerId); 
+  }
+
+
+
+  lockWord = (word) => {
+    if(this.#isWordSolved(word) || this.#isWordLocked(word)) return false;
+
+    this.#lockedWords = [...this.#lockedWords, word]    
+    return true;
+  }
+  unlockWord = (word) => {
+    if(!this.#isWordLocked) return true;
+    this.#lockedWords = this.#lockedWords.filter((lockedWord) => 
+      lockedWord.number !== word.number || lockedWord.profile !== word.profile
+    )
+    return true;
+  }
+
+  updateMatchMatrix = (update) => {    
+
+    SearchStartIndexByClue: for(let [rowIndex, matrixRow] of this.#matchMatrix.entries()){
+      for(let [colIndex, matrixField] of matrixRow.entries()){
+        if(matrixField.clueNumber === update.word.number){
+          update.startIndex = {
+            row: rowIndex,
+            col: colIndex
+          }
+          break SearchStartIndexByClue;
+        }
+      }
+    }
+    let matrixIndex = update.startIndex;     //indice a ser usado para cada campo para atualização
+
+    for(let entryIndex = 0; entryIndex < update.entry.length ; entryIndex++){    //baseado na entrada recebida, insere cada letra na matriz a partir do indice da dica
+      const letter = update.entry[entryIndex]
+
+      //ignora entradas invalidas
+      const element = letter.toUpperCase()
+      const isLetter = typeof element === "string" && element.length === 1 && (element >= "a" && element <= "z" || element >= "A" && element <= "Z");
+      if(!isLetter) continue;
+      
+      //testa se o campo pode ser alterado(não pertence a alguma palavra resolvida)
+      const currentFieldWords = {
+        across: {
+          number: this.#matchMatrix[matrixIndex.row][matrixIndex.col].acrossWord,
+          profile: 'across'
+        },
+        down: {
+          number: this.#matchMatrix[matrixIndex.row][matrixIndex.col].downWord,
+          profile: 'down'
+        }
+      }            
+      const isLetterSolved = this.#isWordSolved(currentFieldWords.across) || this.#isWordSolved(currentFieldWords.down)
+      if(isLetterSolved){
+        //insere o valor ja resolvido atual do campo na string de entrada
+        update.entry = update.entry.slice(0, entryIndex) + this.#matchMatrix[matrixIndex.row][matrixIndex.col].element + update.entry.slice(entryIndex)
+      }else{
+        this.#matchMatrix[matrixIndex.row][matrixIndex.col].element = letter  //atualiza o valor do campo     
+      }     
+
+      //atualiza o campo para o próximo a ser alterado
+      if(update.word.profile === 'across') matrixIndex.col++;
+      if(update.word.profile === 'down') matrixIndex.row++; 
+      
+      //testa se chegou ao final da entrada de dados
+      const overflowMatrixLimits = (matrixIndex.row >= this.#matchMatrix.length) || (matrixIndex.col >= this.#matchMatrix.length)
+      const foundDivider = !overflowMatrixLimits && this.#matchMatrix[matrixIndex.row][matrixIndex.col].element === '.'
+      if(overflowMatrixLimits || foundDivider){   //finalizou de inserir a palavra
+                      
+        //checa se palavra inserida foi solucionada
+        const wordAnswer = this.#answers[update.word.profile].find((answerObject) => {
+          return answerObject.clueNumber === update.word.number}
+        ).value
+        if(update.entry === wordAnswer){
+          this.#solvedWords = [...this.#solvedWords, update.word]
+          this.#incrementPlayerScore(update.word.player, wordAnswer.length*10)          
+          
+          //DEVERIA VARRER CADA LETRA DA PALAVRA RECEM RESOLVIDA, PROCURANDO OUTRAS POSSIVEIS SOLUCIONADAS
+          //LEMBRAR DE DESTRAVAR OS JOGADORES LIGADOS À ESSAS PALAVRAS DA VARREDURA 
+          //CRIAR METODO PARA RECUPERAR PALAVRA A PARTIR DO DATAMATRIX
+          //PASSAR A VERIFICAR PELO METODO CRIADO AO INVES DE PROCURAR A RESPOSTA NA LISTA DE RESPOSTAS          
+          
+          //varre todas as letras da palavra preenchida para verificar outras possiveis palavras solucionadas
+          /*
+          matrixIndex = update.startIndex;            
+          for(let index = 0; index < update.entry.length ; index++){
+            const reviewedField = this.#matchMatrix[matrixIndex.row][matrixIndex.col];
+            const fieldWordReviewed = update.word.profile === 'across' ? reviewedField.downWord : reviewedField.acrossWord;
+            const wordReviewed = {
+              number: fieldWordReviewed,
+              profile: update.word.profile === 'across' ? 'down' : 'across'
+            }
+            if(this.#isWordSolved(wordReviewed)) continue;
+
+
+          }
+          */
+        }
+
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  connectPlayer = (connectedPlayer) => {    
+    const player = this.#players.find((player) => player.id === connectedPlayer.id);    
+    if(player){
+      player.socketId = connectedPlayer.socketId
+      player.connected = true
+      return true
+    }else{
+      return this.#initPlayer(connectedPlayer) 
+    }
+  }    
+  /*disconnectPlayer = (disconnectedPlayer) => {
+    const player = this.#players.find((player) => player.id === disconnectedPlayer.id).connected = false;
+    return player ? true : false 
+  }*/
+  disconnectPlayerByConnection = (socketId) => {
+    if(this.getPlayers().length <= 0) return false; 
+    const player = this.#players.find((player) => player.socketId === socketId).connected = false;
+    return player ? true : false 
+  }
+  
 
 }
