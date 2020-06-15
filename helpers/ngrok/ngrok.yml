@@ -3,18 +3,15 @@ tunnels:
     front:
         addr: 3000
         proto: http        
-    userServiceApi:
+    userService:
         addr: 5000
         proto: http        
-    gameServiceApi:
+    gameService:
         addr: 5001
         proto: http        
-    queueServiceApi:
+    queueService:
         addr: 5002
         proto: http        
-    gameServiceWS:
-        addr: 7000
-        proto: http        
-    queueServiceWS:
-        addr: 7001
+    storeService:
+        addr: 5003
         proto: http        

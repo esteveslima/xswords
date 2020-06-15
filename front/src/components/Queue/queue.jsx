@@ -31,7 +31,7 @@ export default class Queue extends Component {
         //2- ws da fila da queue(retorna erro ou namespace do ws do game)
 
         //simulando a requisição q o server queue faz para pedir a geração de uma partida
-        const response = await fetch(`${QUEUE_SERVER}/generateMatch`, {
+        const response = await fetch(`http://localhost:5001/generateMatch`, {
             method: "GET",
             headers: {              
               'Content-Type': 'application/json'
@@ -41,7 +41,7 @@ export default class Queue extends Component {
         var json = await response.json()        
         if (json.status) {
             //simulando já o retorno do ws da queue com a url + namespace do gameService
-            this.props.onFinish('http://127.0.0.1:7000/' + json.nameSpace)       //substituir pela url do gameService antes de retornar do queueService
+            this.props.onFinish('http://127.0.0.1:5001/' + json.nameSpace)       //substituir pela url do gameService antes de retornar do queueService
         } else {                        
             console.log('error:' + json.error)
         }

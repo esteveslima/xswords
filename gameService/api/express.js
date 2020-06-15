@@ -21,7 +21,11 @@ app.use(morgan('dev'))
 const matchesRouter = require('./routes/match')
 app.use('/', matchesRouter)
 
+/*
 const expressServer = app.listen(
   process.env.PORT_EXPRESS, 
   console.log(`${process.env.NODE_ENV} game express server, running on port ${process.env.PORT_EXPRESS}`)
 );
+*/
+
+module.exports.app = app

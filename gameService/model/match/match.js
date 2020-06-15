@@ -39,7 +39,7 @@ module.exports = class Match{
     this.#initWordsLists();
     this.#initPlayers();
   
-console.log(this.#answers)    //print das respostas para teste
+//console.log(this.#answers)    //print das respostas para teste
   }
 
 
@@ -54,10 +54,14 @@ console.log(this.#answers)    //print das respostas para teste
           
     const response = await fetch(`https://raw.githubusercontent.com/doshea/nyt_crosswords/master/${year}/${month}/${day}.json`, {
       method: "GET"        
-    })        
-    const rawMatchData = await response.json()
-        
-    return new Match(rawMatchData)
+    })     
+    if(response.status === 200){
+      const rawMatchData = await response.json()    
+      return new Match(rawMatchData)
+    }else{
+      return undefined;
+    }   
+    
   }
 
   #initDataMatrices = (rawMatchData) => {       
