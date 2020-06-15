@@ -1,10 +1,11 @@
-const { socketIOServer } = require('./webSocket')
-
-
 exports.createQueueNamespace = async () => {
+
+    const { socketIO } = require('./webSocket')
  
+
+    
     const nsp = "crosswordsMatchmaking";
-    const socketNamespace = socketIOServer.of(nsp)
+    const socketNamespace = socketIO.of(nsp)
 
     socketNamespace.on('connection', (socket) => {
       console.log('user connected' + socket.id)  

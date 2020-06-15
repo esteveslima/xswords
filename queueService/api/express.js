@@ -21,7 +21,11 @@ app.use(morgan('dev'))
 const queueRouter = require('./routes/queue')
 app.use('/', queueRouter)
 
+/*
 const expressServer = app.listen(
   process.env.PORT_EXPRESS, 
-  console.log(`${process.env.NODE_ENV} queue express server, running on port ${process.env.PORT_EXPRESS}`)
+  console.log(`${process.env.NODE_ENV} game express server, running on port ${process.env.PORT_EXPRESS}`)
 );
+*/
+
+module.exports.app = app

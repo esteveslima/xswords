@@ -1,7 +1,8 @@
-const { socketIOServer } = require('./webSocket')
-const Match = require('../model/match/match')
-
 exports.createMatchNamespace = async () => {
+
+    const { socketIO } = require('./webSocket')
+    const Match = require('../model/match/match')
+    if(Match === undefined) return undefined;
 
     const match = await Match.buildMatch();
     const wordLockTime = 10000
@@ -9,7 +10,7 @@ exports.createMatchNamespace = async () => {
 
     
     const nsp = Date.now();
-    const socketNamespace = socketIOServer.of(nsp)
+    const socketNamespace = socketIO.of(nsp)
 
     socketNamespace.on('connection', (socket) => {
       console.log('user connected' + socket.id)  
@@ -26,7 +27,7 @@ exports.createMatchNamespace = async () => {
               socketNamespace.connected[socketId].disconnect();
           });
           socketNamespace.removeAllListeners(); 
-          delete socketIOServer.nsps[nsp]
+          delete socketIO.nsps[nsp]
           console.log('match deleted due to lack of connections')
         }        
       })      
