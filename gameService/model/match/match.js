@@ -30,6 +30,8 @@ module.exports = class Match{
   #lockedWords = [];            //lista de palavras travadas pelos jogadores
   #solvedWords = [];            //lista de palavras resolvidas pelos jogadores
   #players = [];                //lista de jogadores que abriram conexão com o namespace do ws
+  #matchInfo = undefined        //informações da palavra cruzada do nyt gerada
+
 
   constructor(rawMatchData){    //deve seguir esta ordem pois alguns dados podem depender de outros
     if(rawMatchData === undefined) throw new Error('Class must be created with the builder method')    
@@ -38,6 +40,7 @@ module.exports = class Match{
     this.#initDataMatrices(rawMatchData);       
     this.#initWordsLists();
     this.#initPlayers();
+    this.#initMatchInfo(rawMatchData);
   
 //console.log(this.#answers)    //print das respostas para teste
   }
@@ -184,6 +187,9 @@ module.exports = class Match{
   #initPlayers = () => {
     this.#players = [];
   }
+  #initMatchInfo = (rawMatchData) => {
+    this.#matchInfo = rawMatchData.title
+  }
 
 
 
@@ -218,7 +224,7 @@ module.exports = class Match{
   }
 
 
-
+  getMatchInfo = () => { return this.#matchInfo; }
   getMatchMatrix = () => { return this.#matchMatrix; }
   getClues = () => { return this.#clues; }
   getLockedWords = () => { return this.#lockedWords; }
