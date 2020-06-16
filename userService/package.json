@@ -4,8 +4,8 @@
   "description": "Projeto Sistemas Distribuídos",
   "main": "index.js",
   "scripts": {
-    "start": "SET NODE_ENV=production & node index",
-    "dev": "nodemon server"
+    "start": "node index",
+    "dev": "SET NODE_ENV=development & nodemon server"
   },
   "author": "",
   "license": "ISC",

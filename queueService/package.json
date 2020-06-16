@@ -4,8 +4,8 @@
   "description": "microservice para organizar os players e fazer requisições para novas partidas",
   "main": "index.js",
   "scripts": {
-    "start": "SET NODE_ENV=production & node index",
-    "dev": "nodemon server"
+    "start": "node index",
+    "dev": "SET NODE_ENV=development & nodemon server"
   },
   "author": "",
   "license": "ISC",
