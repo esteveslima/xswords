@@ -30,7 +30,7 @@ exports.createMatchNamespace = async () => {
           });
           socketNamespace.removeAllListeners(); 
           delete socketIO.nsps['/'+nsp]
-          match = undefined
+          //match = undefined
           console.log('match deleted due to lack of connections')
         }        
       })      
@@ -50,6 +50,7 @@ exports.createMatchNamespace = async () => {
           socket.emit('solvedWords', match.getSolvedWords())
           //socket.emit('players', match.getPlayers())
           socket.emit('player', match.getPlayer(clientPlayer.id))
+          socket.emit('matchInfo', match.getMatchInfo())
         }else{
           socket.emit('errorMessage', `Cannot connect player ${player.id}`)          
         }

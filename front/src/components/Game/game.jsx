@@ -107,6 +107,8 @@ export default class Game extends Component {
 
       socketIOClient.on('player', (player) => { this.setMyselfPlayerObject(player) })
 
+      socketIOClient.on('matchInfo', (matchInfo) => { console.log(matchInfo) })
+
       socketIOClient.on('errorMessage', (errorMessage) => {
         message.error(errorMessage)
         console.log(errorMessage)
