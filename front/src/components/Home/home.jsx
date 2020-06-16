@@ -6,6 +6,8 @@ import Game from '../Game/game'
 import React, { Component } from 'react'
 import { ShopTwoTone } from '@ant-design/icons';
 import './home.css'
+import jwt from 'jwt-decode'
+import { USER_SERVER } from '../../config/urls'
 
 
 export default class Home extends Component {
@@ -16,7 +18,7 @@ export default class Home extends Component {
         super(props)        
 
         this.state = {
-            user: Date.now(),           //gerando um id aleatorio para testes, substituido pelo id do login
+            user: undefined,
             gameVisible: false,
             storeVisible: false,
             queueVisible: false,
@@ -25,14 +27,28 @@ export default class Home extends Component {
 
     }
 
-
+    setUser = async (userToken) => {
+        const decodedToken = jwt(userToken).id;
+        
+        const response = await fetch(`${USER_SERVER}/api/user/${decodedToken}`, {
+            method: "GET",
+            headers: {              
+              'Content-Type': 'application/json'
+            }            
+        })
+        var json = await response.json()
+        if(json.status){
+            const user = json.user
+            this.setState({user: user})
+        }        
+    }
 
 
 
     render() {
 
         const loginView = (
-            <Login onSuccess={(userToken) => this.setState({ user: userToken })} />
+            <Login onSuccess={(userToken) => this.setUser(userToken) } />
         )
 
         const storeView = (
@@ -62,20 +78,28 @@ export default class Home extends Component {
 
         const buttonStore = (
             <div className="buttonStore" onClick={() => this.setState({ storeVisible: true })}>
-                <ShopTwoTone twoToneColor="#f00" style={{ fontSize: '75px' }} />
+                <ShopTwoTone twoToneColor="#f30" style={{ fontSize: '75px' }} />
             </div>
         )        
 
         const buttonPlay = (
             <div className="buttonPlay" onClick={() => this.setState({ queueVisible: true })}>
-                <span className="buttonPlayWord">Jogar</span>
+                <span className="buttonPlayWord">Play</span>
             </div>
-        )    
+        )
+
+        const userInfo = this.state.user && (
+            <div className="userInfo" style={{display: 'block'}}>
+                <p><span style={{fontSize: 25, color: 'rgb(216, 68, 9)', fontWeight: 'bold'}}>{`Welcome ${this.state.user.nickName}`}</span></p>
+                <p><span style={{fontSize: 25, color: 'rgb(216, 68, 9)', fontWeight: 'bold'}}>{`your total score is ${this.state.user.score}`}</span></p>
+            </div>
+        ) 
         
         
 
         const homeView = (
             <div className="homeView">
+                {userInfo}
                 {buttonPlay}
                 {buttonStore}
                 {storeView}
@@ -91,7 +115,7 @@ export default class Home extends Component {
                     src="https://si.wsj.net/public/resources/images/OG-CO816_201904_G_20190422123727.gif"
                 />
                 {
-                    homeView//this.state.user ? homeView : loginView
+                    this.state.user ? homeView : loginView
                 }                
             </div>
         )

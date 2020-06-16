@@ -14,7 +14,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
     res.status(201).json({ status: true, token: token })
 });
 
-/*
+
 //@desc:    Get User
 //@route:   GET /api/user/:id
 //@access:  Public
@@ -24,7 +24,7 @@ exports.getUser = asyncHandler(async (req, res, next) => {
     if (!user) return next(new ErrorResponse('Not found', 404))
 
     res.status(200).json({ status: true, user: user })
-})*/
+})
 
 //@desc:    Update User
 //@route:   PUT /api/user/:id

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Modal, Button, Input } from 'antd';
+import { Modal, Button, Input, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { USER_SERVER } from '../../config/urls'
 import './login.css'
@@ -29,27 +29,32 @@ export default class Login extends Component {
     login = async () => {        
         this.setState({ loading: true })     
         
-        const response = await fetch(`${USER_SERVER}/api/auth/login/`, {
-            method: "POST",
-            headers: {
-              //'access-token' : JSON.parse(sessionStorage.getItem('token')),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({                
-                login: this.state.login,
-                password: this.state.password
-            }),
+        try{
+            const response = await fetch(`${USER_SERVER}/api/auth/login/`, {
+                method: "POST",
+                headers: {
+                //'access-token' : JSON.parse(sessionStorage.getItem('token')),
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({                
+                    login: this.state.login,
+                    password: this.state.password
+                }),
+                
+            })                
+            var json = await response.json()
             
-        })                
-        var json = await response.json()
-        
-        if (json.status) {      
-            console.log(json.token)
-            this.props.onSuccess(json.token)
-            this.setState({ visible: false })            
-        } else {            
-            console.log('error:' + json.error)
+            if (json.status) {      
+                console.log(json.token)
+                this.props.onSuccess(json.token)
+                this.setState({ visible: false })            
+            } else {
+                message.error('Login unsuccessful, try again')
+            }
+        }catch(e){
+            message.error('Server not responding, try again later')
         }
+        
 
       this.setState({loading: false})
     }
@@ -64,7 +69,7 @@ export default class Login extends Component {
 
         const loginModal = (
             <Modal className="modalLogin"
-                title="Login"
+                title="Sign in"
                 width={300}
                 centered={true}
                 visible={this.state.visible}
@@ -75,14 +80,14 @@ export default class Login extends Component {
                             style={{ backgroundColor: '#fff', borderColor: '#333', color: '#333' }}
                             onClick={() => this.setState({ registerVisible: true })}
                         >
-                            Cadastro
+                            Sign up
                         </Button>
                         <Button className="modalLoginButtonLogin" type="primary"
                             style={{ backgroundColor: '#333', borderColor: '#333' }}
                             loading={this.state.loading}
                             onClick={() => this.login()}
                         >
-                            Entrar
+                            Login
                         </Button>
                     </div>
                 ]}
