@@ -1,14 +1,23 @@
-const { createMatchNamespace } = require('../../socket/wsNamespaces')
-var saveNsp;    //GAMBIARRA PRO SERVIDOR SÓ RETORNAR UM NAMESPACE FIXO PARA TESTES //apagar para release
+const { createMatchNamespace, verifyMatchNamespace } = require('../../socket/wsNamespaces')
+
 exports.generateMatch = async (req, res, next) => {
 
-if(saveNsp) return res.status(200).json({ status: true, nameSpace: saveNsp })     //apagar para release
   const nameSpace = await createMatchNamespace()
-saveNsp = nameSpace                                                               //apagar para release
+
   if(nameSpace){    
     return res.status(200).json({ status: true, nameSpace: nameSpace })
+  }else{    
+    return res.status(500).json({ status: false })
+  }
+}
+
+exports.verifyMatch = async (req, res, next) => {
+
+  const match = await verifyMatchNamespace(req.params.nameSpace)
+
+  if(match){    
+    return res.status(200).json({ status: true })
   }else{
-    //tentar recriar?
     return res.status(500).json({ status: false })
   }
 }

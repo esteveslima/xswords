@@ -25,16 +25,16 @@ export default class Store extends Component {
 
         const drawerStore = (
             <Drawer
-                title="Loja"
+                title="Store"
                 placement="left"
                 closable={true}
                 width="300"
                 onClose={() => this.setState({ visible: false }, () => this.props.selfClose() )}
                 visible={this.state.visible}
             >
-                <p>Itens Loja...</p>
-                <p>Itens Loja...</p>
-                <p>Itens Loja...</p>
+                <p>Items...</p>
+                <p>Items...</p>
+                <p>Items...</p>
             </Drawer>
         )
 

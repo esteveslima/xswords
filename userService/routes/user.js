@@ -5,7 +5,7 @@ const { getUser, createUser, updateUser, deleteUser } = require('../controllers/
 router.route('/').post(createUser)
 
 router.route('/:id')
-  //.get(getUser)
+  .get(getUser)
   .put(updateUser)
   .delete(deleteUser)
 

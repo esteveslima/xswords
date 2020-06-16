@@ -2,9 +2,10 @@ exports.createMatchNamespace = async () => {
 
     const { socketIO } = require('./webSocket')
     const Match = require('../model/match/match')
-    if(Match === undefined) return undefined;
+    
 
-    const match = await Match.buildMatch();
+    let match = await Match.buildMatch();
+    if(match === undefined) return undefined;
     const wordLockTime = 10000
 
 
@@ -17,24 +18,27 @@ exports.createMatchNamespace = async () => {
       //socket.on('', () => {})
 
       socket.on('disconnect', () => {
+        if(match === undefined) return
         console.log('user disconnected' + socket.id)
         match.disconnectPlayerByConnection(socket.id) 
         socketNamespace.emit('players', match.getPlayers())
         
-        if(match.getConnectedPlayers().length <= 0){    //delete match if all players disconnected
+        if(match && match.getConnectedPlayers().length <= 0){    //delete match if all players disconnected
           const connectedNameSpaceSockets = Object.keys(socketNamespace.connected);
           connectedNameSpaceSockets.forEach(socketId => {
-              socketNamespace.connected[socketId].disconnect();
+              socketNamespace.connected[socketId] && socketNamespace.connected[socketId].disconnect();
           });
           socketNamespace.removeAllListeners(); 
-          delete socketIO.nsps[nsp]
+          delete socketIO.nsps['/'+nsp]
+          match = undefined
           console.log('match deleted due to lack of connections')
         }        
       })      
 
-      socket.on('connectPlayer', (playerId) => {  
+      socket.on('connectPlayer', (clientPlayer) => {  
         const player = {
-          id: playerId,
+          id: clientPlayer.id,
+          nickName: clientPlayer.nickName,
           socketId: socket.id
         }
         const connect = match.connectPlayer(player)
@@ -45,7 +49,7 @@ exports.createMatchNamespace = async () => {
           socket.emit('lockedWords', match.getLockedWords())
           socket.emit('solvedWords', match.getSolvedWords())
           //socket.emit('players', match.getPlayers())
-          socket.emit('player', match.getPlayer(playerId))
+          socket.emit('player', match.getPlayer(clientPlayer.id))
         }else{
           socket.emit('errorMessage', `Cannot connect player ${player.id}`)          
         }
@@ -115,4 +119,15 @@ exports.createMatchNamespace = async () => {
     })
 
     return nsp
+}
+
+
+
+
+exports.verifyMatchNamespace = async (nameSpace) => {
+
+    const { socketIO } = require('./webSocket')
+    
+    return Object.keys(socketIO.nsps).includes('/' + nameSpace)
+
 }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Drawer, List, Avatar} from 'antd';
+import { Drawer, List, Avatar, message} from 'antd';
 import { ArrowDownOutlined, ArrowRightOutlined, LoadingOutlined} from '@ant-design/icons';
 import './game.css'
 import io from "socket.io-client";
@@ -61,7 +61,7 @@ export default class Game extends Component {
     closeGame(){
       console.log('closing game')
 
-      this.#socketIOClient.disconnect();
+      this.#socketIOClient && this.#socketIOClient.disconnect();
       this.#socketIOClient = undefined;
       this.#typedStringBuilt = '';
       this.#myself = undefined;      
@@ -78,18 +78,21 @@ export default class Game extends Component {
     //inicia a conexão websocket para recebimento dos dados e atualizações da partida
     websocketConnection = (gameWSEndpoint) => {      
       const socketIOClient = io(gameWSEndpoint, {transports: ['websocket'], upgrade: false})  
-            
+      
 
       
       socketIOClient.on('connect', () => {        
         this.#socketIOClient = socketIOClient
-        const myselfId = 'Player ' + this.#user.toString().slice(this.#user.toString().length - 3)
-        socketIOClient.emit('connectPlayer', myselfId)
-        console.log('ws connected')
+        const userPlayer = {
+          id: this.#user._id,
+          nickName: this.#user.nickName
+        }        
+        socketIOClient.emit('connectPlayer', userPlayer)
+        console.log('game ws connected')
       }); 
 
       socketIOClient.on('disconnect', () => {        
-        console.log('ws disconnected')
+        console.log('game ws disconnected')
       });
       
       socketIOClient.on('dataMatrix', (dataMatrix) => { this.updateAllMatchMatrix(dataMatrix) })
@@ -104,7 +107,10 @@ export default class Game extends Component {
 
       socketIOClient.on('player', (player) => { this.setMyselfPlayerObject(player) })
 
-      socketIOClient.on('errorMessage', (errorMessage) => console.log(errorMessage))
+      socketIOClient.on('errorMessage', (errorMessage) => {
+        message.error(errorMessage)
+        console.log(errorMessage)
+      })
     }
 
     
@@ -454,7 +460,7 @@ export default class Game extends Component {
                       <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" /> :
                       <LoadingOutlined style={{fontSize: 30, marginLeft: 10}}/>
                     }
-                    title={item.id}
+                    title={item.nickName}
                     description={`score: ${item.score}`}
                   />
                 </div>
@@ -485,7 +491,7 @@ export default class Game extends Component {
                 }}
         >
           <div id="cluesDownHeader" style={{position: 'absolute', top: -40, left: 0}}>
-            <span style={{color: '#ee4400', fontSize: 16, fontWeight: 'bold'}}>Palavras para baixo</span>
+            <span style={{color: '#ee4400', fontSize: 16, fontWeight: 'bold'}}>Down Clues</span>
             <ArrowDownOutlined style={{fontSize: 30, marginLeft: 10}}/>
           </div>
           <div id="cluesDown" 
@@ -545,7 +551,7 @@ export default class Game extends Component {
             />
           </div>
           <div id="cluesAcrossHeader" style={{position: 'absolute', top: -40, left: "50%"}}>
-            <span style={{color: '#ee4400', fontSize: 16, fontWeight: 'bold'}}>Palavras para o lado</span>
+            <span style={{color: '#ee4400', fontSize: 16, fontWeight: 'bold'}}>Across Clues</span>
             <ArrowRightOutlined style={{fontSize: 30, marginLeft: 10}}/>
           </div>
           <div id="cluesAcross" 

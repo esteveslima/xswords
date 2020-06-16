@@ -51,17 +51,21 @@ module.exports = class Match{
     const year = Math.floor(1976 + Math.random()*41)        //gera até 2016 apenas
     const month = ('0' + Math.floor(Math.random()*12 + 1)).slice(-2)  //refatorar 
     const day = ('0' + Math.floor(Math.random()*28 + 1)).slice(-2)
-          
-    const response = await fetch(`https://raw.githubusercontent.com/doshea/nyt_crosswords/master/${year}/${month}/${day}.json`, {
-      method: "GET"        
-    })     
-    if(response.status === 200){
-      const rawMatchData = await response.json()    
-      return new Match(rawMatchData)
-    }else{
+    try{
+      const response = await fetch(`https://raw.githubusercontent.com/doshea/nyt_crosswords/master/${year}/${month}/${day}.json`, {
+        method: "GET"        
+      })     
+      if(response.status === 200){
+        const rawMatchData = await response.json()    
+        return new Match(rawMatchData)
+      }else{
+        return undefined;
+      }
+    }catch(e){
+      console.log(e)
       return undefined;
-    }   
-    
+    }
+        
   }
 
   #initDataMatrices = (rawMatchData) => {       
@@ -335,7 +339,8 @@ module.exports = class Match{
   }*/
   disconnectPlayerByConnection = (socketId) => {
     if(this.getPlayers().length <= 0) return false; 
-    const player = this.#players.find((player) => player.socketId === socketId).connected = false;
+    const player = this.#players.find((player) => player.socketId === socketId)
+    if(player) player.connected = false
     return player ? true : false 
   }
   

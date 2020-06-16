@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Modal, Button, Input } from 'antd';
+import { Modal, Button, Input, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { USER_SERVER } from '../../config/urls'
 import './register.css'
@@ -25,27 +25,32 @@ export default class Register extends Component {
     }
 
     register = async () => {
-      this.setState({ loading: true })     
+        this.setState({ loading: true })     
         
-        const response = await fetch(`${USER_SERVER}/api/user/`, {
-            method: "POST",
-            headers: {
-              //'access-token' : JSON.parse(sessionStorage.getItem('token')),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nickName: this.state.nickName,
-                login: this.state.login,
-                password: this.state.password
-            }),
-            
-        })                
-        var json = await response.json()
+        try{
+            const response = await fetch(`${USER_SERVER}/api/user/`, {
+                method: "POST",
+                headers: {
+                //'access-token' : JSON.parse(sessionStorage.getItem('token')),
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nickName: this.state.nickName,
+                    login: this.state.login,
+                    password: this.state.password
+                }),
+                
+            })                
+            var json = await response.json()
 
-        if (json.status) {            
-           this.props.selfClose()    
-        } else {            
-            console.log('error:' + json.error)
+            if (json.status) {            
+                this.props.selfClose()
+                message.success('Registration successful')
+            } else {            
+                message.error('Failed to sign up, try again with other credentials');
+            }
+        }catch(e){
+            message.error('Server not responding, try again later');
         }
 
       this.setState({loading: false})
@@ -89,11 +94,11 @@ export default class Register extends Component {
                         value={this.state.nickName}
                         onChange={(value) => this.setState({ nickName: value.target.value })}
                     />
-                    <Input size="large" placeholder="Usuário" prefix={<UserOutlined />}
+                    <Input size="large" placeholder="Username" prefix={<UserOutlined />}
                         value={this.state.login}
                         onChange={(value) => this.setState({ login: value.target.value })}
                     />
-                    <Input.Password size="large" placeholder="Senha"
+                    <Input.Password size="large" placeholder="Password"
                         value={this.state.password}
                         onChange={(value) => this.setState({ password: value.target.value })}
                     />
