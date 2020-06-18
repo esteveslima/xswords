@@ -1,7 +1,7 @@
 const fetch = require("node-fetch");
 const { GAME_SERVER } = require('../../config/urls')
 
-module.exports = class Match{
+module.exports = class Queue{
 
   #queuePlayersList = [];      //lista de jogadores na fila
   #connectedPlayersList = [];  //lista de jogadores em jogo
