@@ -12,7 +12,9 @@ export default class Game extends Component {
   
   #typedStringBuilt = '';     //string sendo construída na digitação
   #myself = undefined;       //cópia do player do cliente atual(apenas para uso local)
-  
+  #timer = undefined;
+  #timeRemaining = 0;
+  #timerUpdate = 1000;
 
     constructor(props) {
         super(props)
@@ -43,7 +45,8 @@ export default class Game extends Component {
         lockedWords: [],
         solvedWords: [],        
 
-        players: [],       
+        players: [],
+        timerDisplay: undefined,
         
       }, () => this.startGame(gameWSEndpoint)) 
     }
@@ -54,6 +57,7 @@ export default class Game extends Component {
       this.#socketIOClient = undefined;
       this.#typedStringBuilt = '';
       this.#myself = undefined;
+      this.startTimer();
 
       this.websocketConnection(gameWSEndpoint)      
     }
@@ -64,11 +68,35 @@ export default class Game extends Component {
       this.#socketIOClient && this.#socketIOClient.disconnect();
       this.#socketIOClient = undefined;
       this.#typedStringBuilt = '';
-      this.#myself = undefined;      
+      this.#myself = undefined;
+      this.#timer && clearInterval(this.#timer)
+      this.#timer = undefined;
 
       this.setState({ 
         visible: false,        
       }, () => this.props.selfClose() )
+    }
+    //inicia o timer para display(sincronizado com o servidor)
+    startTimer(){
+      if(this.#timer) return;
+      this.#timer = setInterval(() => {
+        if(this.#timeRemaining <= 0){     
+          this.#timeRemaining = 0
+          this.closeGame();
+          return;
+        }
+        this.#timeRemaining -= this.#timerUpdate        
+        this.updateTimerDisplay();
+      }, this.#timerUpdate)
+    }
+    //atualiza o display do timer
+    updateTimerDisplay(){
+      if(this.#timeRemaining < 0) this.#timeRemaining = 0
+      const minutes = Math.floor(this.#timeRemaining/60000)
+      const seconds = Math.floor((this.#timeRemaining%60000)/1000)
+      this.setState({
+        timerDisplay: `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      })
     }
 
 
@@ -109,6 +137,10 @@ export default class Game extends Component {
 
       socketIOClient.on('matchInfo', (matchInfo) => { console.log(matchInfo) })
 
+      socketIOClient.on('timer', (timer) => { this.updateTimer(timer) })
+
+      socketIOClient.on('gameOver', () => { this.closeGame() })
+
       socketIOClient.on('errorMessage', (errorMessage) => {
         message.error(errorMessage)
         console.log(errorMessage)
@@ -130,6 +162,10 @@ export default class Game extends Component {
       //
     }
 
+    //atualiza o valor do timer
+    updateTimer(serverTimer){
+      this.#timeRemaining = serverTimer;
+    }    
     //atualiza todos os dados dos jogadores(a cada atualização do score)
     updateAllPlayers(players){
       this.setState({ players: players });
@@ -438,12 +474,15 @@ export default class Game extends Component {
           style={{
                   width: listWidth, height: listHeight, 
                   position: 'absolute', left: left, top: top,
-                  display: 'flex',
+                  display: 'block',
                   //marginTop: marginTop, marginLeft: marginLeft,
                   borderStyle: 'solid', borderColor: '#ddd', borderWidth: 1,
                   overflowX: 'hidden', overflowY: 'scroll'
                 }}
         >
+          <div id = "matchTimer">
+              <span style={{fontSize: 20, color: 'rgb(216, 68, 9)'}}>{this.state.timerDisplay || `00:00`}</span>
+          </div>
           <List
             itemLayout="horizontal"
             dataSource={ this.state.players }
