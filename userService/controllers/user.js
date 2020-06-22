@@ -50,3 +50,21 @@ exports.deleteUser = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ status: true, user: user })
 })
+
+//@desc:    Update User
+//@route:   PUT /api/user/:id
+//@access:  Public***************************************************************
+exports.updatePlayersScores = asyncHandler(async (req, res, next) => {
+
+    let allPlayersUpdated = true;
+    for(let player of req.body.players){
+        const user = await User.findByIdAndUpdate(player.id, {
+            $inc: { score: player.score }
+        })
+        if(!user) allPlayersUpdated = false;
+    }
+
+    if(!allPlayersUpdated) return next(new ErrorResponse('Error while updating players score', 500))
+
+    res.status(200).json({ status: true })
+})

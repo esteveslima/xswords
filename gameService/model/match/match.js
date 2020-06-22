@@ -236,6 +236,7 @@ module.exports = class Match{
   getPlayer = (playerId) => { 
     return this.#players.find((player) => player.id === playerId); 
   }
+  isMatchSolved = () => { return this.#solvedWords.length >= (this.#clues.across.length + this.#clues.down.length) }
 
 
 

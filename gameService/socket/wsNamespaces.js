@@ -1,18 +1,70 @@
+const fetch = require("node-fetch");
+const { USER_SERVER } = require('../config/urls')
+
+async function updatePlayersScores(matchPlayers){
+  const players = matchPlayers.map((player) => p = {
+    id: player.id,
+    score: player.score,
+  })
+  try{
+    const response = await fetch(`${USER_SERVER}/api/user/updatePlayersScores`, {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ players: players }),                
+    })                
+    var json = await response.json()
+
+    if (json.status) {            
+      return true;
+    } else {       
+      console.log('Error while updating players score')
+      return false;
+    }
+  }catch(e){
+    console.log('Error while updating players score')
+    return false;
+  }
+}
+
 exports.createMatchNamespace = async () => {
 
     const { socketIO } = require('./webSocket')
     const Match = require('../model/match/match')
     
-
+    //cria partida e define seus parametros
     let match = await Match.buildMatch();
     if(match === undefined) return undefined;
     const wordLockTime = 10000
-
+    let matchDuration = 600000
+    const matchTimeUpdate = 1000;
 
     
+    //cria o namespace da partida
     const nsp = Date.now();
     const socketNamespace = socketIO.of(nsp)
 
+    //inicia o timer da partida
+    const matchTimer = setInterval(async () => {
+      matchDuration -= matchTimeUpdate;      
+      if(matchDuration > 0) return;
+
+      //fim de partida, atualiza score dos jogadores conectados
+      await updatePlayersScores(match.getConnectedPlayers());
+
+      //envia mensagem de fim de jogo e deleta partida
+      socketNamespace.emit('gameOver')      
+      const connectedNameSpaceSockets = Object.keys(socketNamespace.connected);
+      connectedNameSpaceSockets.forEach(socketId => {
+          socketNamespace.connected[socketId] && socketNamespace.connected[socketId].disconnect();
+      });
+      socketNamespace.removeAllListeners(); 
+      delete socketIO.nsps['/'+nsp]
+      //match = undefined
+    }, matchTimeUpdate);
+ 
+
+
+    //instancia os callbacks para cada evento do ws
     socketNamespace.on('connection', (socket) => {
       console.log('user connected' + socket.id)  
       //socket.on('', () => {})
@@ -30,6 +82,7 @@ exports.createMatchNamespace = async () => {
           });
           socketNamespace.removeAllListeners(); 
           delete socketIO.nsps['/'+nsp]
+          matchTimer && clearInterval(matchTimer)
           //match = undefined
           console.log('match deleted due to lack of connections')
         }        
@@ -42,8 +95,9 @@ exports.createMatchNamespace = async () => {
           socketId: socket.id
         }
         const connect = match.connectPlayer(player)
-        if(connect){          
+        if(connect){
           socketNamespace.emit('players', match.getPlayers())
+          socket.emit('timer', matchDuration)
           socket.emit('dataMatrix', match.getMatchMatrix())
           socket.emit('clues', match.getClues())
           socket.emit('lockedWords', match.getLockedWords())
@@ -56,17 +110,7 @@ exports.createMatchNamespace = async () => {
         }
       })
 
-      /*socket.on('disconnectPlayer', (playerId) => {
-        const player = {
-          id: playerId
-        }
-        const disconnect = match.disconnectPlayer(player)
-        if(disconnect){
-          socketNamespace.emit('players', match.getPlayers())
-        }else{
-          socket.emit('errorMessage', `Cannot disconnect player ${player.id}`)
-        }
-      })*/
+      
 
       socket.on('getPlayer', (playerId) => {
         const player = match.getPlayer(playerId)
@@ -94,7 +138,7 @@ exports.createMatchNamespace = async () => {
         }
       })
 
-      socket.on('updateMatrix', (update) => {
+      socket.on('updateMatrix', async (update) => {
         const updateMatch = match.updateMatchMatrix(update)
 
         socketNamespace.emit('dataMatrix', match.getMatchMatrix())    //a cada alteração, os dados são repassados a todos os jogadores
@@ -111,6 +155,23 @@ exports.createMatchNamespace = async () => {
           //atualiza a lista de palavras resolvidas e score de players(para caso ter sido resolvido)
           socketNamespace.emit('solvedWords', match.getSolvedWords())
           socketNamespace.emit('players', match.getPlayers())
+          const matchSolved = match.isMatchSolved();
+          if(matchSolved){
+            //fim de partida, atualiza score dos jogadores conectados
+            await updatePlayersScores(match.getConnectedPlayers());
+
+            //envia mensagem de fim de jogo e deleta partida
+            socketNamespace.emit('gameOver')      
+            const connectedNameSpaceSockets = Object.keys(socketNamespace.connected);
+            connectedNameSpaceSockets.forEach(socketId => {
+                socketNamespace.connected[socketId] && socketNamespace.connected[socketId].disconnect();
+            });
+            socketNamespace.removeAllListeners(); 
+            delete socketIO.nsps['/'+nsp]
+            matchTimer && clearInterval(matchTimer)
+            //match = undefined
+            console.log(`match solved! (nsp: ${nsp})`)
+          }
         }else{              
           //enquanto todas as letras não tiverem sido inseridas
         }        
@@ -119,9 +180,9 @@ exports.createMatchNamespace = async () => {
       
     })
 
+    //retorna o namespace da partida criada
     return nsp
 }
-
 
 
 

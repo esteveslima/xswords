@@ -27,10 +27,8 @@ export default class Home extends Component {
 
     }
 
-    setUser = async (userToken) => {
-        const decodedToken = jwt(userToken).id;
-        
-        const response = await fetch(`${USER_SERVER}/api/user/${decodedToken}`, {
+    updateUser = async (id) => {        
+        const response = await fetch(`${USER_SERVER}/api/user/${id}`, {
             method: "GET",
             headers: {              
               'Content-Type': 'application/json'
@@ -48,7 +46,10 @@ export default class Home extends Component {
     render() {
 
         const loginView = (
-            <Login onSuccess={(userToken) => this.setUser(userToken) } />
+            <Login onSuccess={(userToken) => {
+                const userId = jwt(userToken).id;
+                this.updateUser(userId) 
+            }} />
         )
 
         const storeView = (
@@ -72,7 +73,12 @@ export default class Home extends Component {
 
         const gameView = (
             <Game visible={this.state.gameVisible} user={this.state.user} gameWSEndpoint={this.#gameWSEndpoint}
-                selfClose={()=> this.setState({gameVisible: false})} 
+                selfClose={async () => {                    
+                    this.setState({gameVisible: false})
+                    if(this.state.user){                        
+                        await this.updateUser(this.state.user._id);
+                    }
+                }} 
             />
         )
 
