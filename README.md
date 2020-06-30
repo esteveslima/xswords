@@ -11,7 +11,7 @@ Once the word is locked, the player can type the correspondent clue's answer.
 Players cannot lock anothers players words.
 Solved fields from solved words are skipped in case there is any in the selected word.
 Match has a time limit and score is based on the sum of player's solved words lenght.
-On the end of the game, game is finished and player's scores are updated.
+At the end of the game, game is finished and player's scores are updated.
 
 Front-end built with React JS.
 Back-end built with Node JS, Express JS and Mongoose(MongoDB's ODM for users data), in addition of SocketIO websocket.
