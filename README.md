@@ -3,7 +3,7 @@ Distributed Systems project.
 Realtime crosswords multiplayer game.
 Game data provided from https://github.com/doshea/nyt_crosswords.
 
-System built up onto microservices arquitecture, abble to support multiple games with multiple players(persistent connection).
+System built based on microservices arquitecture, abble to support multiple games with multiple players(persistent connection).
 Each game is created for players who have joined the queue, which also is abble to support multiple players and multiple types of queue(only implemented simple queue of n players)
 
 Ingame, "down" words can be locked selecting upward part of cell and "across" words can be locked selecting downward part of the cell.
