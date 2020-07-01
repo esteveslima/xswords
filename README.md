@@ -1,4 +1,4 @@
-Distributed Systems project.
+#Distributed Systems project.
 
 Realtime crosswords multiplayer game.
 Game data provided from https://github.com/doshea/nyt_crosswords.
@@ -16,3 +16,9 @@ At the end of the game, game is finished and player's scores are updated.
 Front-end built with React JS.
 Back-end built with Node JS, Express JS and Mongoose(MongoDB's ODM for users data), in addition of SocketIO websocket.
 Project deployed on Google Cloud Compute Engine free tier f1-micro(unable to deploy on Google Cloud App Engine due to the fetch's restriction in NodeJS)
+
+
+
+answers for testing : https://www.xwordinfo.com/Crossword?date=mm/dd/yyyy
+
+words by clue: https://www.wordplays.com/crossword-solver/
