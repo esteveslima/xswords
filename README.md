@@ -35,8 +35,10 @@ ________________________________________________________________________________
 ## Testing
   To be able to test the project, the constant **CLOUD_IP** in the files `helpers/urls/urls.js` and `front/src/config/urls.js` should be changed to your current testing url or localhost for local testing. Also, configuring the file `userService/config/config.env` to another mongoDB cluster may be necessary.
   After that it's just needed to run `npm start` in every service root folder. 
-
-
+  
+Game titles are displayed in the browser's console at match's beggining(most of them are from NYT crossword)
+answers for testing : https://www.xwordinfo.com/Crossword?date=mm/dd/yyyy
+words by clue: https://www.wordplays.com/crossword-solver/
 __________________________________________________________________________________________________________________________________________________________________________
 ## Game Rules
 Ingame, "*down*" words can be locked selecting bottom part of cell and "*across*" words can be locked selecting top part of the cell.
@@ -48,5 +50,4 @@ At the end of the game, game is finished and player's scores are updated.
 
 
 
-answers for testing : https://www.xwordinfo.com/Crossword?date=mm/dd/yyyy
-words by clue: https://www.wordplays.com/crossword-solver/
+
