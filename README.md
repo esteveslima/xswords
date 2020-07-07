@@ -28,7 +28,7 @@ Each game is created for players who have joined the queue, which also is abble 
 __________________________________________________________________________________________________________________________________________________________________________
 Front-end built with ***React JS***.
 Back-end built with ***Node JS***, ***Express JS*** and ***Mongoose***(MongoDB's ODM for users data), in addition of ***SocketIO*** websocket.
-Project deployed on *Google Cloud Compute Engine* free tier f1-micro(unable to deploy on Google Cloud App Engine due to the fetch's restriction in NodeJS)
+Project deployed on **Google Cloud Compute Engine** free tier f1-micro(unable to deploy on Google Cloud App Engine due to the fetch's restriction in NodeJS)
 
 
 __________________________________________________________________________________________________________________________________________________________________________
