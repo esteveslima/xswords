@@ -10,7 +10,7 @@ System built based on microservices arquitecture, abble to support multiple game
 Each game is created for players who have joined the queue, which also is abble to support multiple players and multiple types of queue(only implemented simple queue of n players)
 
 ### 1. User service
-Handle only http requests: Registration, Login and Update Players scores
+  - Handle only http requests: Registration, Login and Update Players scores
   
 ### 2. Store service
   - Not implemented(possible future feature)
