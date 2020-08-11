@@ -49,9 +49,9 @@ Match has a time limit and score is based on the sum of player's solved words le
 At the end of the game, game is finished and player's scores are updated.
 __________________________________________________________________________________________________________________________________________________________________________
 ## Known Issues
- - Sometimes, the api service that provides the game data responds with a bigger matrix match or with some unhandld modifications from the part of this project, leading to some unexpected behaviours in game;
+ - Sometimes, the api service that provides the game data responds with a bigger matrix match or with some unhandled modifications from the part of this project, leading to some unexpected behaviours in game;
  - Everytime a player selects a matrix's word, all hovered words by other players highlighted locally lose prominence because the list of highlighted words is "hard updated" by the server, which can cause some weird feeling ingame;
  - There is no caching system, so if the game server fails all running matches are lost, similarlly to the queue server making all players lose the possibility of reconecction;
- - Some words doesn't finish the typing process after filling all the fields, requiring to type a few more letters to achieve that. Also there is no depht search looking for another words possibly being solved by extension, leaving them to be claimed to the first to select it and type anything(the words validation needs a refactoring)
+ - Some words doesn't finish the typing process after filling all the fields, requiring to type a few more letters to achieve that. Also there is no depht search looking for another words possibly being solved by extension, leaving them to be claimed to the first one to select it and type anything. ~~(the words validation needs a refactoring)~~
 
 
