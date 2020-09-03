@@ -2,7 +2,7 @@ import Login from '../Login/login'
 import Store from '../Store/store'
 import Queue from '../Queue/queue'
 import Game from '../Game/game'
-
+import xswords_bg from '../../assets/images/crosswords.gif'
 import React, { Component } from 'react'
 import { ShopTwoTone } from '@ant-design/icons';
 import './home.css'
@@ -116,10 +116,7 @@ export default class Home extends Component {
 
         return (
             <div id="homePage">
-                <img
-                    style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0.1, zIndex: -1 }}
-                    src="https://si.wsj.net/public/resources/images/OG-CO816_201904_G_20190422123727.gif"
-                />
+                <img src={xswords_bg} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', opacity: 0.15, zIndex: -1 }} />
                 {
                     this.state.user ? homeView : loginView
                 }                

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index",
-    "dev": "SET NODE_ENV=development & nodemon server"
+    "dev": "env NODE_ENV=development nodemon server"
   },
   "author": "",
   "license": "ISC",
@@ -15,7 +15,6 @@
     "express": "^4.17.1",
     "morgan": "^1.10.0",
     "node-fetch": "^2.6.0",
-    "nodemon": "^2.0.4",
     "socket.io": "^2.3.0"
   }
 }
