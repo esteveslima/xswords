@@ -6,7 +6,9 @@ const express = require('../api/express')
 
 
 const server = http.createServer(express.app);
-const socketIO = io(server);
+const socketIO = io(server, {
+  path: `/${process.env.GAME_WS_ROUTE}`
+});
 
 server.listen(
   process.env.PORT,

@@ -29,7 +29,7 @@ export default class Game extends Component {
 
 
     //atualiza(reseta) o state baseado no props assim que o componente pai atualiza    
-    componentWillReceiveProps({visible, gameWSEndpoint, user}) {  
+    componentWillReceiveProps({visible, gameMatch, user}) {  
       if(!visible && !this.state.visible) return   //evita multiplas chamadas dessa função      
       
       this.#user = user;
@@ -48,10 +48,10 @@ export default class Game extends Component {
         players: [],
         timerDisplay: undefined,
         
-      }, () => this.startGame(gameWSEndpoint)) 
+      }, () => this.startGame(gameMatch)) 
     }
     //faz as chamadas para dar inicio ao jogo
-    startGame = async (gameWSEndpoint) => {
+    startGame = async (gameMatch) => {
       console.log('opening game')
 
       this.#socketIOClient = undefined;
@@ -59,7 +59,7 @@ export default class Game extends Component {
       this.#myself = undefined;
       this.startTimer();
 
-      this.websocketConnection(gameWSEndpoint)      
+      this.websocketConnection(gameMatch)      
     }
     //fecha drawer do jogo, disconecta o ws e apaga sua referência
     closeGame(){
@@ -104,8 +104,13 @@ export default class Game extends Component {
 
 
     //inicia a conexão websocket para recebimento dos dados e atualizações da partida
-    websocketConnection = (gameWSEndpoint) => {      
-      const socketIOClient = io(gameWSEndpoint, {transports: ['websocket'], upgrade: false})  
+    websocketConnection = (gameMatch) => {
+      const gameWSEndpoint = `http://${process.env.REACT_APP_GAME_HOST}:${process.env.REACT_APP_GAME_PORT}/${gameMatch.nameSpace}`
+      const socketIOClient = io(gameWSEndpoint, {
+        path: `/${gameMatch.path}`,
+        transports: ['websocket'], 
+        upgrade: false
+      })  
       
 
       

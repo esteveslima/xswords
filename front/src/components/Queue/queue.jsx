@@ -6,7 +6,7 @@ import { QUEUE_SERVER } from '../../config/urls'
 import io from "socket.io-client";
 
 export default class Queue extends Component {
-
+    #authToken = undefined;
     #user = undefined;
     #socketIOClient = undefined;
     constructor(props) {
@@ -19,9 +19,10 @@ export default class Queue extends Component {
 
     }
 
-    componentWillReceiveProps({visible, user}) {   
+    componentWillReceiveProps({visible, user, authToken}) {   
         if(!visible && !this.state.visible) return       //evita multiplas chamadas dessa função             
         
+        this.#authToken = authToken;
         this.#user = user;
         
         this.setState({
@@ -41,14 +42,19 @@ export default class Queue extends Component {
                 method: "GET",
                 timeout: 5000,
                 headers: {              
-                'Content-Type': 'application/json'
+                    'Authorization' : `Bearer ${this.#authToken}`,
+                    'Content-Type': 'application/json',
                 }            
             })
             
-            var json = await response.json()            
-            if(json.status){
-                const queueEndpoint = `${QUEUE_SERVER}/${json.nameSpace}`
-                this.websocketQueue(queueEndpoint)
+                     
+            if(response.status === 200){
+                var json = await response.json()
+                const queue = {
+                    path: json.path,
+                    nameSpace: json.nameSpace
+                }                
+                this.websocketQueue(queue)
             }else{
                 message.error('Failed to join queue, try again');
                 this.leaveQueue();
@@ -60,9 +66,15 @@ export default class Queue extends Component {
         
     }
 
-    websocketQueue = (queueEndpoint) => {
-        const socketIOClient = io(queueEndpoint, {transports: ['websocket'], upgrade: false})
-
+    websocketQueue = (queue) => {      
+        console.log(queue)  
+        const queueEndpoint = `http://${process.env.REACT_APP_QUEUE_HOST}:${process.env.REACT_APP_QUEUE_PORT}/${queue.nameSpace}`
+        const socketIOClient = io(queueEndpoint, {
+            path: `/${queue.path}`,
+            transports: ['websocket'],
+            upgrade: false
+        })
+        
         socketIOClient.on('connect', () => {
             this.#socketIOClient = socketIOClient
             const myselfId = this.#user._id
@@ -72,8 +84,8 @@ export default class Queue extends Component {
         socketIOClient.on('disconnect', () => {        
             console.log('queue ws disconnected')
         });
-        socketIOClient.on('match', (gameWSEndpoint) => {
-            this.props.onFinish(gameWSEndpoint)
+        socketIOClient.on('match', (gameMatch) => {            
+            this.props.onFinish(gameMatch)
             this.leaveQueue();
         })
     }

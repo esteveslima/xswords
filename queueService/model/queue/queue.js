@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const jwt = require('jsonwebtoken')
 const { GAME_SERVER } = require('../../config/urls')
 
 module.exports = class Queue{
@@ -12,6 +13,8 @@ module.exports = class Queue{
     this.queuePlayersList = [];      //lista de jogadores na fila
     this.connectedPlayersList = [];  //lista de jogadores em jogo
     this.matchPlayersNumber = process.env.MATCH_PLAYERS_NUMBER;
+
+    this.authToken = jwt.sign({ id: 'queueService' }, process.env.USER_SERVICE_JWT_SECRET, { expiresIn: process.env.QUEUE_SERVICE_JWT_EXPIRES })
   }
 
   getQueuePlayers () { return this.queuePlayersList; }
@@ -54,13 +57,14 @@ module.exports = class Queue{
       const newMatchPlayers = this.queuePlayersList
 
       //faz requisição ao server do jogo por uma partida nova
-      const newMatchNamespace = await this.requestNewMatchNamespace()      
-      if(!newMatchNamespace) return false
-      const gameWSEndpoint = `${GAME_SERVER}/${newMatchNamespace}`
+      const newMatch = await this.requestNewMatch()      
+      if(!newMatch) return false
+      const gameWSpath = newMatch.path
+      const gameWSNamespace = `${newMatch.nameSpace}`
       
       //marca os players com o namespace em que estão conectados
       newMatchPlayers.forEach((matchPlayer) => {
-        Object.assign(matchPlayer, {match: gameWSEndpoint})
+        Object.assign(matchPlayer, {match: `${gameWSpath}/${gameWSNamespace}`})
         this.connectedPlayersList.push(matchPlayer)
       })
       //remove os players conectados da queue
@@ -68,24 +72,34 @@ module.exports = class Queue{
         return !newMatchPlayers.map((matchPlayer) => matchPlayer.id).includes(queuePlayer.id)
       })
       
-      const newMatch = {
-        endpoint: gameWSEndpoint,
+      const generatedMatch = {
+        path: gameWSpath,
+        namespace: gameWSNamespace,
         players: newMatchPlayers
       }
-      return newMatch
+      return generatedMatch
     }
 
     return false;
   }
 
-  async requestNewMatchNamespace (){
+  async requestNewMatch (){
     for(let attempt = 0; attempt < 5; attempt++){
       const response = await fetch(`${GAME_SERVER}/generateMatch`, {
+        headers: { 
+          'Authorization' : `Bearer ${this.authToken}`,
+          'Content-Type': 'application/json', 
+        },
         method: "GET"        
       })
-      const json = await response.json()
-      if(json.status){        
-        return json.nameSpace
+      
+      if(response.status === 200){        
+        const json = await response.json()
+        const matchConnection = {
+          path: json.path,
+          nameSpace: json.nameSpace
+        }
+        return matchConnection
       }
     }
     return false;
@@ -93,10 +107,19 @@ module.exports = class Queue{
 
   async verifyMatchExists(matchNamespace){      
     const response = await fetch(`${GAME_SERVER}/verifyMatch/${matchNamespace}`, {
+      headers: { 
+        'Authorization' : `Bearer ${this.authToken}`,
+        'Content-Type': 'application/json', 
+      },
       method: "GET",
     })
-    const json = await response.json()
-    return json.status
+    if(response.status === 200){
+      return true
+    }else{
+      return false
+    }
+    //const json = await response.json()
+    //return json.status
   }
 
   /*getQueuePlayers = () => { return this.#queuePlayersList; }

@@ -27,7 +27,11 @@ exports.createQueueNamespace = async () => {
           const newMatch = await queue.manageQueue()
           if(newMatch){
             //envia para cada jogador da partida o endpoint relacionado àquela partida
-            newMatch.players.forEach((player) => socketNamespace.sockets[player.socketId].emit('match', newMatch.endpoint))            
+            const match = {
+              path: newMatch.path,
+              nameSpace: newMatch.namespace
+            }            
+            newMatch.players.forEach((player) => socketNamespace.sockets[player.socketId].emit('match', match))            
           }
         }else{
           const playerInGame = queue.getConnectedPlayer(player)

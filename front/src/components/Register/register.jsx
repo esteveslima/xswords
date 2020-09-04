@@ -28,11 +28,10 @@ export default class Register extends Component {
         this.setState({ loading: true })     
         
         try{
-            const response = await fetch(`${USER_SERVER}/api/user/`, {
+            const response = await fetch(`${USER_SERVER}/user/public/create`, {
                 method: "POST",
-                headers: {
-                //'access-token' : JSON.parse(sessionStorage.getItem('token')),
-                'Content-Type': 'application/json'
+                headers: {                
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     nickName: this.state.nickName,
@@ -41,9 +40,10 @@ export default class Register extends Component {
                 }),
                 
             })                
-            var json = await response.json()
+            
 
-            if (json.status) {            
+            if (response.status === 200) {    
+                //var json = await response.json()        
                 this.props.selfClose()
                 message.success('Registration successful')
             } else {            

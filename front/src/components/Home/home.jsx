@@ -12,7 +12,8 @@ import { USER_SERVER } from '../../config/urls'
 
 export default class Home extends Component {
 
-    #gameWSEndpoint = undefined;
+    #gameMatch = undefined;
+    #authToken = undefined;
 
     constructor(props) {
         super(props)        
@@ -28,14 +29,16 @@ export default class Home extends Component {
     }
 
     updateUser = async (id) => {        
-        const response = await fetch(`${USER_SERVER}/api/user/${id}`, {
+        const response = await fetch(`${USER_SERVER}/user/${id}`, {
             method: "GET",
-            headers: {              
-              'Content-Type': 'application/json'
+            headers: {
+                'Authorization' : `Bearer ${this.#authToken}`,
+                'Content-Type': 'application/json',
             }            
         })
-        var json = await response.json()
-        if(json.status){
+        
+        if(response.status === 200){
+            var json = await response.json()
             const user = json.user
             this.setState({user: user})
         }        
@@ -47,6 +50,7 @@ export default class Home extends Component {
 
         const loginView = (
             <Login onSuccess={(userToken) => {
+                this.#authToken = userToken 
                 const userId = jwt(userToken).id;
                 this.updateUser(userId) 
             }} />
@@ -58,10 +62,10 @@ export default class Home extends Component {
         )
 
         const queueView = (
-            <Queue visible={this.state.queueVisible} user={this.state.user}
+            <Queue visible={this.state.queueVisible} user={this.state.user} authToken={this.#authToken}
                 selfClose={()=> this.setState({queueVisible: false})} 
-                onFinish={(gameWSEndpoint) => {
-                    this.#gameWSEndpoint = gameWSEndpoint                    
+                onFinish={(gameMatch) => {
+                    this.#gameMatch = gameMatch                  
                     this.setState({
                         queueVisible: false, 
                         gameVisible: true,                         
@@ -72,7 +76,7 @@ export default class Home extends Component {
         )
 
         const gameView = (
-            <Game visible={this.state.gameVisible} user={this.state.user} gameWSEndpoint={this.#gameWSEndpoint}
+            <Game visible={this.state.gameVisible} user={this.state.user} gameMatch={this.#gameMatch}
                 selfClose={async () => {                    
                     this.setState({gameVisible: false})
                     if(this.state.user){                        

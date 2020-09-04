@@ -1,4 +1,5 @@
 const fetch = require("node-fetch");
+const jwt = require('jsonwebtoken')
 const { USER_SERVER } = require('../config/urls')
 
 async function updatePlayersScores(matchPlayers){
@@ -7,14 +8,19 @@ async function updatePlayersScores(matchPlayers){
     score: player.score,
   })
   try{
-    const response = await fetch(`${USER_SERVER}/api/user/updatePlayersScores`, {
+    const authToken = jwt.sign({ id: 'gameService' }, process.env.USER_SERVICE_JWT_SECRET, { expiresIn: process.env.GAME_SERVICE_JWT_EXPIRES })
+    const response = await fetch(`${USER_SERVER}/user/updatePlayersScores`, {
       method: "POST",
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Authorization' : `Bearer ${authToken}`,
+        'Content-Type': 'application/json', 
+      },
       body: JSON.stringify({ players: players }),                
     })                
-    var json = await response.json()
+    
 
-    if (json.status) {            
+    if (response.status === 200) {  
+      //var json = await response.json()          
       return true;
     } else {       
       console.log('Error while updating players score')
@@ -34,8 +40,8 @@ exports.createMatchNamespace = async () => {
     //cria partida e define seus parametros
     let match = await Match.buildMatch();
     if(match === undefined) return undefined;
-    const wordLockTime = 10000
-    let matchDuration = 600000
+    const wordLockTime = process.env.WORD_LOCK_TIME
+    let matchDuration = process.env.MATCH_DURATION
     const matchTimeUpdate = 1000;
 
     

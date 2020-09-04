@@ -5,7 +5,7 @@ exports.generateMatch = async (req, res, next) => {
   const nameSpace = await createMatchNamespace()
 
   if(nameSpace){    
-    return res.status(200).json({ status: true, nameSpace: nameSpace })
+    return res.status(200).json({ status: true, path: process.env.GAME_WS_ROUTE, nameSpace: nameSpace })
   }else{    
     return res.status(500).json({ status: false })
   }

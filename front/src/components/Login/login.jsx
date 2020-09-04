@@ -27,14 +27,12 @@ export default class Login extends Component {
     }
 
     login = async () => {        
-        this.setState({ loading: true })     
-        
+        this.setState({ loading: true })             
         try{
-            const response = await fetch(`${USER_SERVER}/api/auth/login/`, {
+            const response = await fetch(`${USER_SERVER}/auth/public/login/`, {
                 method: "POST",
-                headers: {
-                //'access-token' : JSON.parse(sessionStorage.getItem('token')),
-                'Content-Type': 'application/json'
+                headers: {                
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({                
                     login: this.state.login,
@@ -42,11 +40,10 @@ export default class Login extends Component {
                 }),
                 
             })                
-            var json = await response.json()
-            
-            if (json.status) {                      
+            if(response.status === 200){
+                var json = await response.json()
                 this.props.onSuccess(json.token)
-                this.setState({ visible: false })            
+                this.setState({ visible: false }) 
             } else {
                 message.error('Login unsuccessful, try again')
             }

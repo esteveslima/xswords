@@ -9,8 +9,6 @@ const app = express()
 var corsOptions = {
         origin: '*',
         methods: ['OPTIONS', 'GET', 'POST', 'PUT', 'DELETE'],
-        allowedHeaders: ['Content-Type', 'Access-Token'],
-        exposedHeaders: ['Access-Token']
     };
 app.use(cors(corsOptions));
 
@@ -33,9 +31,9 @@ app.use(cookieParser())
 
 //Routers
 const usersRouter = require('./routes/user')
-app.use('/api/user', usersRouter)
+app.use('/user', usersRouter)
 const authenticationRouter = require('./routes/auth')
-app.use('/api/auth', authenticationRouter)
+app.use('/auth', authenticationRouter)
 
 //Middleware Error Handler
 const errorhandler = require('./middleware/error')

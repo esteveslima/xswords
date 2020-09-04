@@ -1,6 +1,7 @@
 const User = require('../models/User')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
+const jwt = require('jsonwebtoken');
 
 //@desc:    User Login(generating token)
 //@route:   POST /api/user/
@@ -25,11 +26,22 @@ exports.login = asyncHandler(async (req, res, next) => {
     res.status(200).cookie('token', token, cookieOptions).json({ status: true, token: token })
 });
 
-//@desc:    Validade User(using token)
-//@route:   POST /api/user/
+//@desc:    Authorize User(using token)
+//@route:   GET /public/authorization/
 //@access:  Public 
-exports.authenticate = asyncHandler(async (req, res, next) => {
-
+exports.authorization = asyncHandler(async (req, res, next) => {
+    // Pattern as "Bearer JSON_WEB_TOKEN" in the headers or {"token": JSON_WEB_TOKEN} in the cookie
+  const { authorization } = req.headers;
+  const token = authorization ? authorization.split(' ')[1] : req.cookies.token;
+  console.log(`token: ${token}`)
+  try {
+    const decodedToken =  jwt.verify(token, process.env.JWT_SECRET);
+    console.log(decodedToken)
+    // req.userId = decodedToken.id;
+    res.status(200).json({ Status: true })
+  } catch (e) {
+    res.status(401).json({ Status: false, message: "Unhauthorized, please authenticate" })
+  }
 });
 
 
