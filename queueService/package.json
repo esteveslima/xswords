@@ -1,20 +1,22 @@
 {
   "name": "queueservice",
   "version": "1.0.0",
-  "description": "microservice para organizar os players e fazer requisições para novas partidas",
+  "description": "",
   "main": "index.js",
-  "scripts": {
-    "start": "node index",
-    "dev": "env NODE_ENV=development nodemon server"
-  },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "morgan": "^1.10.0",
     "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.4",
     "socket.io": "^2.3.0"
-  }
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index",
+    "dev": "env NODE_ENV=development nodemon server"
+  },
+  "author": "",
+  "license": "ISC"
 }

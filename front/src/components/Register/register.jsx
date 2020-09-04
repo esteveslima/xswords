@@ -50,7 +50,7 @@ export default class Register extends Component {
                 message.error('Failed to sign up, try again with other credentials');
             }
         }catch(e){
-            message.error('Server not responding, try again later');
+            message.error(e.toString());
         }
 
       this.setState({loading: false})

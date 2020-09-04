@@ -2,7 +2,7 @@ import React from 'react';
 //import './App.css';
 import Home from './components/Home/home'
 import "antd/dist/antd.css";
-require('dotenv').config({ path: './config/.env' })
+require('dotenv').config()
 
 function App() {
   console.warn = console.error = () => {};    //evitando mensagens de erro e avisos no console
