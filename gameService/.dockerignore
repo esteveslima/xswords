@@ -1,0 +1,9 @@
+**/Dockerfile
+**/Dockerfile.dev
+**/.dockerignore
+**/.git
+**/.gitignore
+**/npm-debug.log
+**/node_modules
+**/*.sh
+**/.eslintrc.json

@@ -1,0 +1,130 @@
+version: '3'
+services:
+    autoheal:                                                                   
+        image: willfarrell/autoheal        
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            - AUTOHEAL_CONTAINER_LABEL=all
+            - AUTOHEAL_INTERVAL=30
+            - AUTOHEAL_START_PERIOD=15
+        restart: always
+    nginx-server:                                                               
+        image: xswords/nginx-server-image:latest
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        depends_on:                                                             
+            - front-server
+        restart: always
+        ports:                                                      
+            - "8080:80"                                                 # unique entry point to the application for the client, which will be routed through nginx locations
+    front-server:  
+        image: xswords/front-server-image:latest                                 
+        build:
+            context: ../front
+            dockerfile: Dockerfile
+            args:                                                       # Using args because with the creation of static files, the env variables are used only in the build process. These args are passed to dockerfile, which handles it through build proccess
+                - REACT_APP_USER_HOST=localhost                         # host accessed from client, not from inside docker-compose network...
+                - REACT_APP_USER_PORT=8080                              # ... so these variables will interact directly with nginx-server...   
+                - REACT_APP_USER_ROUTE=/user-server                     # ... needing to provide the leading route to nginx.
+                - REACT_APP_QUEUE_HOST=localhost
+                - REACT_APP_QUEUE_PORT=8080
+                - REACT_APP_QUEUE_ROUTE=/queue-server                
+                - REACT_APP_GAME_HOST=localhost
+                - REACT_APP_GAME_PORT=8080
+                - REACT_APP_GAME_ROUTE=                                 # not needed, only accessed through ws endpoint received from queue                
+                - REACT_APP_STORE_HOST=localhost
+                - REACT_APP_STORE_PORT=8080
+                - REACT_APP_STORE_ROUTE=                                # not implemented
+        depends_on:                                                             
+            - game-server
+            - queue-server
+            - user-server
+        deploy:
+            replicas: 1                                                         
+            restart_policy:
+                condition: on-failure                                           
+        restart: always              
+    game-server:        
+        image: xswords/game-server-image:latest                                 
+        build:
+            context: ../gameService
+            dockerfile: Dockerfile
+        depends_on:                                                             
+            - queue-server
+        deploy:
+            replicas: 1                                                         
+            restart_policy:
+                condition: on-failure                                           
+        environment:
+            - GAME_WS_ROUTE=game-ws                                     # customized socket.io path for game server
+            - USER_SERVICE_JWT_SECRET=xswordsUserServerSecret           # must be identical to user-server secret
+            - USER_HOST=user-server
+            - USER_PORT=5000
+            - USER_ROUTE=                                               # not needed, accessed directly through docker-compose network 
+            - QUEUE_HOST=queue-server
+            - QUEUE_PORT=5002
+            - QUEUE_ROUTE=                                              # not needed, accessed directly through docker-compose network 
+            - WORD_LOCK_TIME=10000
+            - MATCH_DURATION=600000
+        restart: always
+    queue-server:        
+        image: xswords/queue-server-image:latest                                    
+        build:
+            context: ../queueService
+            dockerfile: Dockerfile 
+        depends_on:                                                             
+            - user-server       
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure                                           
+        environment:
+            - QUEUE_WS_ROUTE=queue-ws                                   # customized socket.io path for queue server
+            - USER_SERVICE_JWT_SECRET=xswordsUserServerSecret           # must be identical to user-server secret
+            - GAME_HOST=game-server
+            - GAME_PORT=5001
+            - GAME_ROUTE=                                               # not needed, accessed directly through docker-compose network 
+            - MATCH_PLAYERS_NUMBER=2
+        restart: always
+    user-server:        
+        image: xswords/user-server-image:latest                      
+        build:
+            context: ../userService
+            dockerfile: Dockerfile
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+        depends_on:                                                             
+            - mongo-database
+        environment:            
+            - JWT_SECRET=xswordsUserServerSecret                                          
+            - MONGO_URI=mongodb://mongo-database:27017/user-mongodb             
+        restart: always                               
+    mongo-database:                                                             
+        image: mongo
+        volumes:
+            - ../user-mongodb-storage:/data/db                                  
+        environment:
+            - MONGO_INITDB_DATABASE=user-mongodb                                
+            #- MONGO_INITDB_ROOT_USERNAME=user                                  
+            #- MONGO_INITDB_ROOT_PASSWORD=password
+        restart: always
+        expose:
+            - '27017'                                                           
+
+
+
+
+            
+
+
+
+
+
+
+
+
+
