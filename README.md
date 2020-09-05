@@ -32,7 +32,7 @@ Front-end built with ***React JS***.
 
 Back-end built with ***Node JS***, ***Express JS*** and ***Mongoose***(MongoDB's ODM for users data), in addition of ***SocketIO*** websocket.
 
-Project available with docker-compose, which has all a internal network for inter-container communication
+Project available with docker-compose, which has an internal network for inter-container communication
 
 __________________________________________________________________________________________________________________________________________________________________________
 
