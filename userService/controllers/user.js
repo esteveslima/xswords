@@ -11,7 +11,7 @@ exports.createUser = asyncHandler(async (req, res, next) => {
 
     const token = user.getSignedJwtToken()
 
-    res.status(201).json({ status: true, token: token })
+    res.status(200).json({ status: true, token: token })
 });
 
 
