@@ -26,6 +26,9 @@ Each game is created for players who have joined the queue, which also is abble 
 ### 4. Store service
   - Not implemented(possible future feature) 
 
+### 5. Front-end service
+  - Client game interface
+
   
 __________________________________________________________________________________________________________________________________________________________________________
 Front-end built with ***React JS***.
@@ -63,7 +66,7 @@ ________________________________________________________________________________
     db.users.insertOne({ name: 'first' })
   ```
  
-  After that, run `npm start` in every service root and the access to localhost:3000 can be done.
+  After that, run `npm start` in each service root folder to start all servers and the access to localhost:3000 can be done.
   
 <br/><br/>
 
