@@ -34,9 +34,13 @@ exports.createQueueNamespace = async () => {
             newMatch.players.forEach((player) => socketNamespace.sockets[player.socketId].emit('match', match))            
           }
         }else{
-          const playerInGame = queue.getConnectedPlayer(player)
-          const playerMatchEndpoint = playerInGame.match       
-          socket.emit('match', playerMatchEndpoint)                   
+          const playerInGame = queue.getConnectedPlayer(player)          
+          const playerMatchEndpoint = playerInGame.match               
+          const match = {
+            path: playerMatchEndpoint.split('/')[0],
+            nameSpace: playerMatchEndpoint.split('/')[1]
+          }       
+          socket.emit('match', match)                   
         }     
       })
 
