@@ -695,14 +695,14 @@ export default class Game extends Component {
                 height={"100%"}
                 onClose={() => this.closeGame()}
                 visible={this.state.visible}
-                onKeyPress={(event) => this.readEntry(event)}
+                // onKeyPress={(event) => this.readEntry(event)}
             >
                 {this.state.dataMatrix && this.buildGameScreen()}                
             </Drawer>
         )
 
         return (
-            <div id="drawerStore">
+            <div id="drawerStore" onKeyPress={this.readEntry.bind(this)}>
                 {drawerGame}                
             </div>
         )
